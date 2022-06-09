@@ -1,0 +1,27 @@
+{
+    "$schema": "https://json.schemastore.org/tsconfig",
+    "display": "Node 17",
+  
+    "compilerOptions": {
+      "lib": ["es2021", "DOM"],
+      "module": "commonjs",
+      "target": "es2021",
+      "esModuleInterop": true,
+      "skipLibCheck": true,
+      "sourceMap": true,
+      "inlineSources": true,
+      "forceConsistentCasingInFileNames": true,
+      "emitDecoratorMetadata": true,
+      "experimentalDecorators": true,
+      "strict": true,
+      "strictNullChecks": false,
+      "strictPropertyInitialization": false,
+      "noImplicitOverride": true,
+      "noImplicitAny": true,
+      "baseUrl": "./src",
+      "outDir": "./build",
+      "paths": {
+        "@milkscript/structures": ["structures"]
+      }
+    }
+  }
