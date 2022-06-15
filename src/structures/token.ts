@@ -1,4 +1,5 @@
 import { Source } from './source';
+import { File } from './file';
 
 export enum TokenType {
   UNKNOWN = 'unknown', // TODO: throw error if lexer returns at least 1 unknown token
@@ -11,9 +12,10 @@ export enum TokenType {
 export class Token {
   public type: TokenType;
   public value: string = '';
-  public source: Source = new Source();
+  public source: Source;
 
-  constructor(type: TokenType) {
+  constructor(type: TokenType, file: File) {
     this.type = type;
+    this.source = new Source(file);
   }
 }

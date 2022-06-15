@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 
 export class File {
-  private path: string;
+  public path: string;
   public content: string;
 
   constructor(path: string) {

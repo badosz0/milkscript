@@ -1,4 +1,6 @@
+import { assert } from 'node:console';
 import { ALPHABET, ESCAPES, HEX, NUMBERS, SPECIAL_SYMBOLS, SYMBOLS } from '../constants/characters';
+import { CompileError } from './error';
 import { File } from './file';
 import { Token, TokenType } from './token';
 
@@ -7,7 +9,7 @@ export class Lexer {
   private contentLength: number;
 
   private tokens: Token[] = [];
-  private currentToken: Token = new Token(TokenType.UNKNOWN);
+  private currentToken: Token;
 
   private index: number = 0;
   private character: number = 0;
@@ -16,6 +18,7 @@ export class Lexer {
   constructor(file: File) {
     this.file = file;
     this.contentLength = file.content.length;
+    this.currentToken = new Token(TokenType.UNKNOWN, file);
   }
 
   private peek(position = 0): string {
@@ -65,7 +68,7 @@ export class Lexer {
     this.currentToken.source.index.end = this.index;
 
     this.tokens.push(this.currentToken);
-    this.currentToken = new Token(TokenType.UNKNOWN);
+    this.currentToken = new Token(TokenType.UNKNOWN, this.file);
   }
 
   private skipWhitespaceAndComments(): void {
@@ -161,8 +164,10 @@ export class Lexer {
             if (this.peek() === '\\') {
               this.eatChar();
               if (!ESCAPES.includes(this.peek())) {
-                // TODO: error
-                throw new Error(`invalid escape: ${this.peek()}`);
+                this.currentToken.source.character.start = this.character - 1;
+                this.currentToken.source.character.end = this.character + 1;
+                this.currentToken.source.line.end = this.line;
+                throw new CompileError(3, this.currentToken.source);
               }
             }
 
@@ -177,8 +182,7 @@ export class Lexer {
                 this.newLine();
                 this.currentToken.value += '\\n';
               } else {
-                // TODO: error
-                throw new Error('invalid escape');
+                assert(false);
               }
             } else {
               this.eatChar();
@@ -186,8 +190,11 @@ export class Lexer {
           }
 
           if (!this.peek()) {
-            // TODO: error
-            throw new Error('string not finished');
+            const last2Chars = this.currentToken.value.slice(-2);
+
+            this.currentToken.source.character.end = this.character;
+            this.currentToken.source.line.end = last2Chars === '\\n' ? this.line - 1 : this.line;
+            throw new CompileError(1, this.currentToken.source);
           }
 
           this.advance();
@@ -221,8 +228,9 @@ export class Lexer {
         continue;
       }
 
-      // TODO: error
-      throw new Error('invalid char');
+      this.currentToken.source.character.end = this.character;
+      this.currentToken.source.line.end = this.line;
+      throw new CompileError(2, this.currentToken.source);
     }
 
     return this.tokens;
