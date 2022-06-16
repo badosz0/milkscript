@@ -1,5 +1,6 @@
 import { CompileError } from './error';
 import { File } from './file';
+import { Generator } from './generators';
 import { Lexer } from './lexer';
 import { Parser } from './parser';
 
@@ -14,7 +15,11 @@ export class Compiler {
       const parser = new Parser(tokens);
       const program = parser.parse();
 
+      const generator = new Generator(program);
+      const code = generator.generate();
+
       console.log(JSON.stringify(program, null, 2));
+      console.log(code);
     } catch (error) {
       if (error instanceof CompileError) {
         error.print();
