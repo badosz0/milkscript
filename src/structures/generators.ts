@@ -2,6 +2,7 @@ import { assert } from 'node:console';
 import { Statement } from './statement';
 import { Binary } from './statements/binary';
 import { Bool } from './statements/bool';
+import { Call } from './statements/call';
 import { Comparison } from './statements/comparison';
 import { Function } from './statements/function';
 import { Identifier } from './statements/identifier';
@@ -85,6 +86,22 @@ export class Generator {
     return `return${statement.statement ? ` ${this.walk(statement.statement)}` : ''}`;
   }
 
+  private generateCall(statement: Call): string {
+    // TODO: self
+
+    const caller = this.walk(statement.caller);
+
+    const callArguments: string[] = [];
+
+    for (const argument of statement.arguments) {
+      callArguments.push(this.walk(argument));
+    }
+
+    // TODO: super
+
+    return `${caller}(${callArguments.join(', ')})`;
+  }
+
   private walk(statement: Statement): string {
     if (statement instanceof Integer) {
       return this.generateInteger(statement);
@@ -112,6 +129,9 @@ export class Generator {
     }
     if (statement instanceof Return) {
       return this.generateReturn(statement);
+    }
+    if (statement instanceof Call) {
+      return this.generateCall(statement);
     }
 
     assert(false);

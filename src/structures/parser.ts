@@ -5,6 +5,7 @@ import { Source } from './source';
 import { Stack, StackType, Statement } from './statement';
 import { Binary } from './statements/binary';
 import { Bool } from './statements/bool';
+import { Call } from './statements/call';
 import { Comparison } from './statements/comparison';
 import { Function } from './statements/function';
 import { Identifier } from './statements/identifier';
@@ -263,6 +264,7 @@ export class Parser {
     if (this.peek()) {
       statement = this.checkBinary(statement, precedence, stack);
       statement = this.checkComparison(statement, precedence, stack);
+      statement = this.checkCall(statement, precedence, stack);
     }
 
     return statement;
@@ -314,6 +316,57 @@ export class Parser {
     comparison.source = this.createSource(comparison.left, comparison.right);
 
     return this.checkExpression(comparison, precedence, [ ...stack, comparison.getStack() ]);
+  }
+
+  private checkCall(statement: Statement, precedence: number, stack: Stack): Statement {
+    if (!this.checkToken(TokenType.SYMBOL, '(')) {
+      return statement;
+    }
+
+    if (this.peek().source.index.start !== statement.source.index.end) {
+      return statement;
+    }
+
+    if (this.getPrecedence('call') < precedence) {
+      return statement;
+    }
+
+    const call = new Call(stack);
+    call.caller = statement;
+
+    const leftParen = this.advance();
+
+    while (true) {
+      if (!this.peek()) {
+	      throw new CompileError(10, this.createSource(statement, leftParen));
+      }
+
+      if (this.checkToken(TokenType.SYMBOL, ')')) {
+        break;
+      }
+
+      const argument = this.walk(call.precedence, [ ...stack, call.getStack(StackType.INSIDE) ]);
+
+      if (!this.peek()) {
+	      throw new CompileError(10, this.createSource(statement, leftParen));
+      }
+
+      if (this.checkToken(TokenType.SYMBOL, ')')) {
+        call.arguments.push(argument);
+        break;
+      }
+
+      if (!this.checkToken(TokenType.SYMBOL, ',')) {
+        throw new CompileError(11, this.createSource(statement, leftParen));
+      } else {
+        call.arguments.push(argument);
+        this.advance();
+      }
+    }
+
+    call.source = this.createSource(statement, this.advance());
+
+    return this.checkExpression(call, precedence, [ ...stack, call.getStack() ]);
   }
 
   private walk(precendence: number, stack: Stack): Statement {

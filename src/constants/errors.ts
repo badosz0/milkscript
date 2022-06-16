@@ -8,4 +8,6 @@ export const ERRORS: Record<number, string> = {
   7: 'Empty parenthesized statement',
   8: 'Unclosed function declaration',
   9: 'Parameters should be separated with comma',
+  10: 'Unclosed function call.',
+  11: 'arguments should be separated with comma.',
 };
