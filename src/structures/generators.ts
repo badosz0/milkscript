@@ -9,6 +9,7 @@ import { Integer } from './statements/integer';
 import { Minus } from './statements/minus';
 import { Parenthesized } from './statements/parenthesized';
 import { Program } from './statements/program';
+import { Return } from './statements/return';
 
 export class Generator {
   private program: Program;
@@ -80,6 +81,10 @@ export class Generator {
     return `(${this.walk(statement.statement)})`;
   }
 
+  private generateReturn(statement: Return): string {
+    return `return${statement.statement ? ` ${this.walk(statement.statement)}` : ''}`;
+  }
+
   private walk(statement: Statement): string {
     if (statement instanceof Integer) {
       return this.generateInteger(statement);
@@ -105,6 +110,11 @@ export class Generator {
     if (statement instanceof Function) {
       return this.generateFunction(statement);
     }
+    if (statement instanceof Return) {
+      return this.generateReturn(statement);
+    }
+
+    assert(false);
   }
 
   public generate(): string {

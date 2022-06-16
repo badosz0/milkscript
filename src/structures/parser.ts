@@ -1,4 +1,3 @@
-import { assert } from 'node:console';
 import { LUA_KEYWORDS } from '../constants/lua';
 import { PRECEDENCE } from '../constants/precedence';
 import { CompileError } from './error';
@@ -13,6 +12,7 @@ import { Integer } from './statements/integer';
 import { Minus } from './statements/minus';
 import { Parenthesized } from './statements/parenthesized';
 import { Program } from './statements/program';
+import { Return } from './statements/return';
 import { Token, TokenType } from './token';
 
 export class Parser {
@@ -193,8 +193,7 @@ export class Parser {
         throw new CompileError(8, this.createSource(token, arrow));
       }
 
-      // TODO: parseReturn
-      assert(false);
+      function_.body = this.parseReturn(arrow);
     } else {
       throw new CompileError(8, this.createSource(token, rightParen));
     }
@@ -220,6 +219,8 @@ export class Parser {
       case 'true':
       case 'false':
         return this.parseBool(token, precedence);
+      case 'return':
+        return this.parseReturn(token);
       default:
         return this.parseIdentifier(token, precedence);
     }
@@ -231,6 +232,19 @@ export class Parser {
     bool.source = token.source;
 
     return this.checkExpression(bool, precedence);
+  }
+
+  private parseReturn(token: Token): Statement {
+    const return_ = new Return();
+
+    if (this.peek()?.source.line.start === token.source.line.end) {
+      return_.statement = this.walk(return_.precedence);
+      return_.source = this.createSource(token, return_.statement);
+    } else {
+      return_.source = token.source;
+    }
+
+    return return_;
   }
 
   private parseIdentifier(token: Token, precedence: number): Statement {
