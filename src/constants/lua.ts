@@ -1,0 +1,16 @@
+export const LUA_KEYWORDS: string[] = [
+  'and',
+  'do',
+  'elseif',
+  'end',
+  'function',
+  'in',
+  'local',
+  'nil',
+  'not',
+  'or',
+  'repeat',
+  'then',
+  'until',
+  'while',
+];

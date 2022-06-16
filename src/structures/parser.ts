@@ -1,3 +1,4 @@
+import { LUA_KEYWORDS } from '../constants/lua';
 import { PRECEDENCE } from '../constants/precedence';
 import { CompileError } from './error';
 import { Source } from './source';
@@ -5,6 +6,7 @@ import { Statement } from './statement';
 import { Binary } from './statements/binary';
 import { Bool } from './statements/bool';
 import { Comparison } from './statements/comparison';
+import { Identifier } from './statements/identifier';
 import { Integer } from './statements/integer';
 import { Minus } from './statements/minus';
 import { Program } from './statements/program';
@@ -91,6 +93,8 @@ export class Parser {
       case 'true':
       case 'false':
         return this.parseBool(token, precedence);
+      default:
+        return this.parseIdentifier(token, precedence);
     }
   }
 
@@ -100,6 +104,18 @@ export class Parser {
     bool.source = token.source;
 
     return this.checkExpression(bool, precedence);
+  }
+
+  private parseIdentifier(token: Token, precedence: number): Statement {
+    const identifier = new Identifier();
+    identifier.variable = token.value;
+    identifier.source = token.source;
+
+    if (LUA_KEYWORDS.includes(identifier.variable)) {
+      identifier.variable = `__${identifier.variable}`;
+    }
+
+    return this.checkExpression(identifier, precedence);
   }
 
   private checkExpression(statement: Statement, precedence: number): Statement {

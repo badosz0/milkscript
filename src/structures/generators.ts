@@ -2,6 +2,7 @@ import { Statement } from './statement';
 import { Binary } from './statements/binary';
 import { Bool } from './statements/bool';
 import { Comparison } from './statements/comparison';
+import { Identifier } from './statements/identifier';
 import { Integer } from './statements/integer';
 import { Minus } from './statements/minus';
 import { Program } from './statements/program';
@@ -37,6 +38,10 @@ export class Generator {
     return `${this.walk(statement.left)} ${statement.symbol.value.replace('!=', '~=')} ${this.walk(statement.right)}`;
   }
 
+  private generateIdentifier(statement: Identifier): string {
+    return statement.variable;
+  }
+
   private walk(statement: Statement): string {
     if (statement instanceof Integer) {
       return this.generateInteger(statement);
@@ -52,6 +57,9 @@ export class Generator {
     }
     if (statement instanceof Comparison) {
       return this.generateComparison(statement);
+    }
+    if (statement instanceof Identifier) {
+      return this.generateIdentifier(statement);
     }
   }
 
