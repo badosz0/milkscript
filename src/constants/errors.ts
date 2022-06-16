@@ -6,4 +6,6 @@ export const ERRORS: Record<number, string> = {
   5: 'Unclosed binary operation',
   6: 'Unclosed parenthesized statement',
   7: 'Empty parenthesized statement',
+  8: 'Unclosed function declaration',
+  9: 'Parameters should be separated with comma',
 };

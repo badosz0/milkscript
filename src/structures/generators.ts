@@ -1,7 +1,9 @@
+import { assert } from 'node:console';
 import { Statement } from './statement';
 import { Binary } from './statements/binary';
 import { Bool } from './statements/bool';
 import { Comparison } from './statements/comparison';
+import { Function } from './statements/function';
 import { Identifier } from './statements/identifier';
 import { Integer } from './statements/integer';
 import { Minus } from './statements/minus';
@@ -10,10 +12,15 @@ import { Program } from './statements/program';
 
 export class Generator {
   private program: Program;
+  private indentation: number = 0;
   public code: string = '';
 
   constructor(program: Program) {
     this.program = program;
+  }
+
+  private generateIndentation(additional = 0): string {
+    return '  '.repeat(this.indentation + additional);
   }
 
   private generateInteger(statement: Integer): string {
@@ -43,6 +50,32 @@ export class Generator {
     return statement.variable;
   }
 
+  private generateFunction(statement: Function): string {
+    const parameters: string[] = [];
+
+    for (const parameter of statement.parameters) {
+      // TODO: assignment, rest, optional. se;f
+      if (parameter instanceof Identifier) {
+        parameters.push(parameter.variable);
+      } else {
+        assert(false);
+      }
+    }
+
+    this.indentation++;
+
+    const statements = `${this.generateIndentation()}${this.walk(statement.body)}\n`;
+
+    // TODO: default block
+    // TODO: selfParameters
+
+    this.indentation--;
+
+    // TODO: in class
+
+    return `function (${parameters.join(', ')})\n${statements}${this.generateIndentation()}end`;
+  }
+
   private generateParenthesized(statement: Parenthesized): string {
     return `(${this.walk(statement.statement)})`;
   }
@@ -68,6 +101,9 @@ export class Generator {
     }
     if (statement instanceof Parenthesized) {
       return this.generateParenthesized(statement);
+    }
+    if (statement instanceof Function) {
+      return this.generateFunction(statement);
     }
   }
 

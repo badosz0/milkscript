@@ -1,3 +1,4 @@
+import { assert } from 'node:console';
 import { LUA_KEYWORDS } from '../constants/lua';
 import { PRECEDENCE } from '../constants/precedence';
 import { CompileError } from './error';
@@ -6,6 +7,7 @@ import { Statement } from './statement';
 import { Binary } from './statements/binary';
 import { Bool } from './statements/bool';
 import { Comparison } from './statements/comparison';
+import { Function } from './statements/function';
 import { Identifier } from './statements/identifier';
 import { Integer } from './statements/integer';
 import { Minus } from './statements/minus';
@@ -111,7 +113,7 @@ export class Parser {
           const next = this.peek(i + 1);
 
           if (next?.type === TokenType.SYMBOL && [ '{', '=>', '->' ].includes(next.value)) {
-            return this.parseParenthesizedOrFunction(token, precedence);
+            return this.parseFunction(token);
           } else {
             break;
           }
@@ -143,6 +145,63 @@ export class Parser {
     parenthesized.source = this.createSource(token, this.advance());
 
     return this.checkExpression(parenthesized, precedence);
+  }
+
+  private parseFunction(token: Token): Statement {
+    const function_ = new Function();
+
+    while (true) {
+      if (!this.peek()) {
+        throw new CompileError(8, token.source); // TODO: till last token?
+      }
+
+      if (this.checkToken(TokenType.SYMBOL, ')')) {
+        break;
+      }
+
+      const parameter = this.walk(function_.precedence);
+
+      if (this.checkToken(TokenType.SYMBOL, ')')) {
+        function_.parameters.push(parameter);
+        break;
+      }
+
+      if (!this.checkToken(TokenType.SYMBOL, ',')) {
+        throw new CompileError(9, this.createSource(token, this.peek() ?? parameter));
+      }
+
+      function_.parameters.push(parameter);
+      this.advance();
+    }
+
+    const rightParen = this.advance();
+
+    if (this.checkToken(TokenType.SYMBOL, '{')) {
+      function_.body = this.walk(function_.precedence);
+    } else if (this.checkToken(TokenType.SYMBOL, '->')) {
+      const arrow = this.advance();
+
+      if (!this.peek()) {
+        throw new CompileError(8, this.createSource(token, arrow));
+      }
+
+      function_.body = this.walk(function_.precedence);
+    } else if (this.checkToken(TokenType.SYMBOL, '=>')) {
+      const arrow = this.advance();
+
+      if (!this.peek()) {
+        throw new CompileError(8, this.createSource(token, arrow));
+      }
+
+      // TODO: parseReturn
+      assert(false);
+    } else {
+      throw new CompileError(8, this.createSource(token, rightParen));
+    }
+
+    function_.source = this.createSource(token, function_.body);
+
+    return function_;
   }
 
   private parseMinus(token: Token, precedence: number): Statement {
