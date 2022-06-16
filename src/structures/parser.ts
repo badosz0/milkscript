@@ -2,6 +2,7 @@ import { PRECEDENCE } from '../constants/precedence';
 import { Source } from './source';
 import { Statement } from './statement';
 import { Binary } from './statements/binary';
+import { Bool } from './statements/bool';
 import { Integer } from './statements/integer';
 import { Minus } from './statements/minus';
 import { Program } from './statements/program';
@@ -83,6 +84,22 @@ export class Parser {
     return this.checkExpression(minus, precedence);
   }
 
+  private parseKeyword(token: Token, precedence: number): Statement {
+    switch (token.value) {
+      case 'true':
+      case 'false':
+        return this.parseBool(token, precedence);
+    }
+  }
+
+  private parseBool(token: Token, precedence: number): Statement {
+    const bool = new Bool();
+    bool.value = token.value === 'true';
+    bool.source = token.source;
+
+    return this.checkExpression(bool, precedence);
+  }
+
   private checkExpression(statement: Statement, precedence: number): Statement {
     if (this.peek()) {
       statement = this.checkBinary(statement, precedence);
@@ -118,9 +135,10 @@ export class Parser {
     switch (token.type) {
       case TokenType.NUMBER:
         return this.parseNumber(token, precendence);
-      case TokenType.SYMBOL: {
+      case TokenType.SYMBOL:
         return this.parseSymbol(token, precendence);
-      }
+      case TokenType.KEYWORD:
+        return this.parseKeyword(token, precendence);
     }
   }
 

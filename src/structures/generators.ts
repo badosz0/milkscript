@@ -1,5 +1,6 @@
 import { Statement } from './statement';
 import { Binary } from './statements/binary';
+import { Bool } from './statements/bool';
 import { Integer } from './statements/integer';
 import { Minus } from './statements/minus';
 import { Program } from './statements/program';
@@ -21,6 +22,10 @@ export class Generator {
     return `-(${this.walk(statement.statement)})`;
   }
 
+  private generateBool(statement: Bool): string {
+    return statement.value ? 'true' : 'false';
+  }
+
   private generateBinary(statement: Binary): string {
     return statement.operator.value === '**'
       ? `__pow(${this.walk(statement.left)}, ${this.walk(statement.right)})`
@@ -36,6 +41,9 @@ export class Generator {
     }
     if (statement instanceof Binary) {
       return this.generateBinary(statement);
+    }
+    if (statement instanceof Bool) {
+      return this.generateBool(statement);
     }
   }
 
