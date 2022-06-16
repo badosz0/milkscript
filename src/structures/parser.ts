@@ -1,4 +1,5 @@
 import { PRECEDENCE } from '../constants/precedence';
+import { CompileError } from './error';
 import { Source } from './source';
 import { Statement } from './statement';
 import { Binary } from './statements/binary';
@@ -121,7 +122,9 @@ export class Parser {
 
     const operator = this.advance();
 
-    // TODO: if no peek error]
+    if (!this.peek()) {
+      throw new CompileError(5, this.createSource(statement, operator));
+    }
 
     const binary = new Binary();
     binary.operator = operator;
@@ -142,7 +145,10 @@ export class Parser {
     }
 
     const symbol = this.advance();
-    // TODO: if no peek error
+
+    if (!this.peek()) {
+      throw new CompileError(4, this.createSource(statement, symbol));
+    }
 
     const comparison = new Comparison();
     comparison.symbol = symbol;

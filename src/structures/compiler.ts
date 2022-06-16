@@ -23,6 +23,7 @@ export class Compiler {
     } catch (error) {
       if (error instanceof CompileError) {
         error.print();
+        return;
       }
 
       console.log(error);
