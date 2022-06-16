@@ -5,6 +5,7 @@ import { Comparison } from './statements/comparison';
 import { Identifier } from './statements/identifier';
 import { Integer } from './statements/integer';
 import { Minus } from './statements/minus';
+import { Parenthesized } from './statements/parenthesized';
 import { Program } from './statements/program';
 
 export class Generator {
@@ -42,6 +43,10 @@ export class Generator {
     return statement.variable;
   }
 
+  private generateParenthesized(statement: Parenthesized): string {
+    return `(${this.walk(statement.statement)})`;
+  }
+
   private walk(statement: Statement): string {
     if (statement instanceof Integer) {
       return this.generateInteger(statement);
@@ -60,6 +65,9 @@ export class Generator {
     }
     if (statement instanceof Identifier) {
       return this.generateIdentifier(statement);
+    }
+    if (statement instanceof Parenthesized) {
+      return this.generateParenthesized(statement);
     }
   }
 

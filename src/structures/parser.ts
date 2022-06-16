@@ -9,6 +9,7 @@ import { Comparison } from './statements/comparison';
 import { Identifier } from './statements/identifier';
 import { Integer } from './statements/integer';
 import { Minus } from './statements/minus';
+import { Parenthesized } from './statements/parenthesized';
 import { Program } from './statements/program';
 import { Token, TokenType } from './token';
 
@@ -36,6 +37,15 @@ export class Parser {
     }
 
     return type === token.type;
+  }
+
+  private checkToken(type: TokenType, value: string, skip = 0): boolean {
+    const token = this.peek(skip);
+    if (!token) {
+      return false;
+    }
+
+    return type === token.type && value === token.value;
   }
 
   private getPrecedence(statement: Statement | string): number {
@@ -72,9 +82,67 @@ export class Parser {
     switch (token.value) {
       case '-':
         return this.parseMinus(token, precedence);
-
-      // TODO: default error
+      case '(':
+        return this.parseParenthesizedOrFunction(token, precedence);
     }
+
+    // TODO: default error
+  }
+
+  private parseParenthesizedOrFunction(token: Token, precedence: number): Statement {
+    // TODO: if if, for, elseif, case, switch, while, return
+
+    let leftParen = 0;
+    let rightParen = 0;
+
+    for (let i = 0; i <= (this.tokens.length - this.index); i++) {
+      const peek = this.peek(i);
+
+      if (peek?.type !== TokenType.SYMBOL) {
+        continue;
+      }
+
+      if (peek.value === '(') {
+        leftParen++;
+      } else if (peek.value === ')') {
+        rightParen++;
+
+        if (rightParen === leftParen + 1) {
+          const next = this.peek(i + 1);
+
+          if (next?.type === TokenType.SYMBOL && [ '{', '=>', '->' ].includes(next.value)) {
+            return this.parseParenthesizedOrFunction(token, precedence);
+          } else {
+            break;
+          }
+        }
+      }
+    }
+
+    return this.parseParenthesized(token, precedence);
+  }
+
+  private parseParenthesized(token: Token, precedence: number): Statement {
+    if (!this.peek()) {
+      throw new CompileError(6, token.source);
+    }
+
+    if (this.checkToken(TokenType.SYMBOL, ')')) {
+      throw new CompileError(7, this.createSource(token, this.peek()));
+    }
+
+    const parenthesized = new Parenthesized();
+    const statement = this.walk(parenthesized.precedence);
+
+    parenthesized.statement = statement;
+
+    if (!this.checkToken(TokenType.SYMBOL, ')')) {
+      throw new CompileError(6, this.createSource(token, statement));
+    }
+
+    parenthesized.source = this.createSource(token, this.advance());
+
+    return this.checkExpression(parenthesized, precedence);
   }
 
   private parseMinus(token: Token, precedence: number): Statement {
