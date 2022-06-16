@@ -1,6 +1,7 @@
 import { Statement } from './statement';
 import { Binary } from './statements/binary';
 import { Bool } from './statements/bool';
+import { Comparison } from './statements/comparison';
 import { Integer } from './statements/integer';
 import { Minus } from './statements/minus';
 import { Program } from './statements/program';
@@ -28,8 +29,12 @@ export class Generator {
 
   private generateBinary(statement: Binary): string {
     return statement.operator.value === '**'
-      ? `__pow(${this.walk(statement.left)}, ${this.walk(statement.right)})`
+      ? `__pow(${this.walk(statement.left)}, ${this.walk(statement.right)})` // TODO __pov
       : `${this.walk(statement.left)} ${statement.operator.value} ${this.walk(statement.right)}`;
+  }
+
+  private generateComparison(statement: Comparison): string {
+    return `${this.walk(statement.left)} ${statement.symbol.value.replace('!=', '~=')} ${this.walk(statement.right)}`;
   }
 
   private walk(statement: Statement): string {
@@ -44,6 +49,9 @@ export class Generator {
     }
     if (statement instanceof Bool) {
       return this.generateBool(statement);
+    }
+    if (statement instanceof Comparison) {
+      return this.generateComparison(statement);
     }
   }
 

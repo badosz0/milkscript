@@ -3,6 +3,7 @@ import { Source } from './source';
 import { Statement } from './statement';
 import { Binary } from './statements/binary';
 import { Bool } from './statements/bool';
+import { Comparison } from './statements/comparison';
 import { Integer } from './statements/integer';
 import { Minus } from './statements/minus';
 import { Program } from './statements/program';
@@ -103,6 +104,7 @@ export class Parser {
   private checkExpression(statement: Statement, precedence: number): Statement {
     if (this.peek()) {
       statement = this.checkBinary(statement, precedence);
+      statement = this.checkComparison(statement, precedence);
     }
 
     return statement;
@@ -119,7 +121,8 @@ export class Parser {
 
     const operator = this.advance();
 
-    // TODO: if no peek error
+    // TODO: if no peek error]
+
     const binary = new Binary();
     binary.operator = operator;
     binary.left = statement;
@@ -127,6 +130,27 @@ export class Parser {
     binary.source = this.createSource(binary.left, binary.right);
 
     return this.checkExpression(binary, precedence);
+  }
+
+  private checkComparison(statement: Statement, precedence: number): Statement {
+    if (!this.checkTokenType(TokenType.SYMBOL) || ![ '<', '>', '<=', '>=', '==', '!=' ].includes(this.peek().value)) {
+      return statement;
+    }
+
+    if (this.getPrecedence('comparison') < precedence) {
+      return statement;
+    }
+
+    const symbol = this.advance();
+    // TODO: if no peek error
+
+    const comparison = new Comparison();
+    comparison.symbol = symbol;
+    comparison.left = statement;
+    comparison.right = this.walk(comparison.precedence);
+    comparison.source = this.createSource(comparison.left, comparison.right);
+
+    return this.checkExpression(comparison, precedence);
   }
 
   private walk(precendence: number): Statement {
