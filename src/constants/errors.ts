@@ -9,5 +9,9 @@ export const ERRORS: Record<number, string> = {
   8: 'Unclosed function declaration',
   9: 'Parameters should be separated with comma',
   10: 'Unclosed function call.',
-  11: 'arguments should be separated with comma.',
+  11: 'Arguments should be separated with comma.',
+  12: 'Unclosed directive.',
+  13: 'Expected directive name.',
+  14: 'Unknown directive.',
+  15: 'Expected lua code provided in string.',
 };

@@ -7,6 +7,7 @@ import { Comparison } from './statements/comparison';
 import { Function } from './statements/function';
 import { Identifier } from './statements/identifier';
 import { Integer } from './statements/integer';
+import { Lua } from './statements/lua';
 import { Minus } from './statements/minus';
 import { Parenthesized } from './statements/parenthesized';
 import { Program } from './statements/program';
@@ -102,6 +103,10 @@ export class Generator {
     return `${caller}(${callArguments.join(', ')})`;
   }
 
+  private generateLua(statement: Lua): string {
+    return statement.code.replace(/\\n/g, '\n');
+  }
+
   private walk(statement: Statement): string {
     if (statement instanceof Integer) {
       return this.generateInteger(statement);
@@ -132,6 +137,9 @@ export class Generator {
     }
     if (statement instanceof Call) {
       return this.generateCall(statement);
+    }
+    if (statement instanceof Lua) {
+      return this.generateLua(statement);
     }
 
     assert(false);

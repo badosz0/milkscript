@@ -1,3 +1,4 @@
+import { assert } from 'node:console';
 import { LUA_KEYWORDS } from '../constants/lua';
 import { PRECEDENCE } from '../constants/precedence';
 import { CompileError } from './error';
@@ -10,6 +11,7 @@ import { Comparison } from './statements/comparison';
 import { Function } from './statements/function';
 import { Identifier } from './statements/identifier';
 import { Integer } from './statements/integer';
+import { Lua } from './statements/lua';
 import { Minus } from './statements/minus';
 import { Parenthesized } from './statements/parenthesized';
 import { Program } from './statements/program';
@@ -87,9 +89,46 @@ export class Parser {
         return this.parseMinus(token, precedence, stack);
       case '(':
         return this.parseParenthesizedOrFunction(token, precedence, stack);
+      case '#':
+        return this.parseDirective(token, precedence, stack);
+      default:
+        assert(false);// TODO: default error
+    }
+  }
+
+  private parseDirective(token: Token, precedence: number, stack: Stack): Statement {
+    const directive = this.peek();
+
+    if (!directive) {
+      throw new CompileError(12, token.source);
     }
 
-    // TODO: default error
+    if (directive.type !== TokenType.KEYWORD) {
+      throw new CompileError(13, directive.source);
+    }
+
+    switch (directive.value) {
+      case 'lua':
+        return this.parseLua(token, precedence, stack);
+      default:
+        throw new CompileError(14, directive.source);
+    }
+  }
+
+  private parseLua(token: Token, precedence: number, stack: Stack): Statement {
+    const keyword = this.advance();
+
+    if (!this.checkTokenType(TokenType.STRING)) {
+      throw new CompileError(15, this.createSource(token, keyword));
+    }
+
+    const code = this.advance();
+
+    const lua = new Lua(stack);
+    lua.source = this.createSource(token, code);
+    lua.code = code.value;
+
+    return lua;
   }
 
   private parseParenthesizedOrFunction(token: Token, precedence: number, stack: Stack): Statement {
