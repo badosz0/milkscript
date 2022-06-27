@@ -1,5 +1,6 @@
 import { assert } from 'node:console';
 import { Statement } from './statement';
+import { Assignment } from './statements/assignment';
 import { Binary } from './statements/binary';
 import { Bool } from './statements/bool';
 import { Call } from './statements/call';
@@ -107,6 +108,14 @@ export class Generator {
     return statement.code.replace(/\\n/g, '\n');
   }
 
+  private generateAssignment(statement: Assignment): string {
+    const left = this.walk(statement.left);
+    const right = this.walk(statement.right);
+
+    // TODO: local, sequence
+    return `${left} = ${right}`;
+  }
+
   private walk(statement: Statement): string {
     if (statement instanceof Integer) {
       return this.generateInteger(statement);
@@ -140,6 +149,9 @@ export class Generator {
     }
     if (statement instanceof Lua) {
       return this.generateLua(statement);
+    }
+    if (statement instanceof Assignment) {
+      return this.generateAssignment(statement);
     }
 
     assert(false);

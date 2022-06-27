@@ -6,7 +6,8 @@ export const PRECEDENCE: Record<Statement['name'], number> = {
   'return': -1,
   'call': -1,
 
-  'binary': 1,
+  'assignment': 1,
+  'binary': 2,
 
   'prefix': 999,
 };

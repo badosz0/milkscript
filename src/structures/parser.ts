@@ -4,6 +4,7 @@ import { PRECEDENCE } from '../constants/precedence';
 import { CompileError } from './error';
 import { Source } from './source';
 import { Stack, StackType, Statement } from './statement';
+import { Assignment } from './statements/assignment';
 import { Binary } from './statements/binary';
 import { Bool } from './statements/bool';
 import { Call } from './statements/call';
@@ -304,6 +305,7 @@ export class Parser {
       statement = this.checkBinary(statement, precedence, stack);
       statement = this.checkComparison(statement, precedence, stack);
       statement = this.checkCall(statement, precedence, stack);
+      statement = this.checkAssignment(statement, precedence, stack);
     }
 
     return statement;
@@ -355,6 +357,30 @@ export class Parser {
     comparison.source = this.createSource(comparison.left, comparison.right);
 
     return this.checkExpression(comparison, precedence, [ ...stack, comparison.getStack() ]);
+  }
+
+  private checkAssignment(statement: Statement, precedence: number, stack: Stack): Statement {
+    if (!this.checkToken(TokenType.SYMBOL, '=')) {
+      return statement;
+    }
+
+    if (this.getPrecedence('assignment') < precedence) {
+      return statement;
+    }
+
+    const symbol = this.advance();
+
+    if (!this.peek()) {
+      throw new CompileError(16, this.createSource(statement, symbol));
+    }
+
+    const assignment = new Assignment(stack);
+
+    assignment.left = statement;
+    assignment.right = this.walk(assignment.precedence, [ ...stack, assignment.getStack(StackType.INSIDE) ]);
+    assignment.source = this.createSource(assignment.left, assignment.right);
+
+    return this.checkExpression(assignment, precedence, [ ...stack, assignment.getStack() ]);
   }
 
   private checkCall(statement: Statement, precedence: number, stack: Stack): Statement {
