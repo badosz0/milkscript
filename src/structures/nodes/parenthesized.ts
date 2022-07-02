@@ -1,6 +1,6 @@
-import { Node } from '../node';
+import { Node, NodeType } from '../node';
 
 export class Parenthesized extends Node {
-  public name: string = 'parenthesized';
+  public type = NodeType.PARENTHESIZED;
   public node: Node;
 }

@@ -1,13 +1,13 @@
-import { Node } from '../structures/node';
+import { NodeType } from '../structures/node';
 
-export const PRECEDENCE: Record<Node['name'], number> = {
-  'parenthesized': -1,
-  'function': -1,
-  'return': -1,
-  'call': -1,
+export const PRECEDENCE: Partial<Record<NodeType, number>> = {
+  [NodeType.PARENTHESIZED]: -1,
+  [NodeType.FUNCTION]: -1,
+  [NodeType.RETURN]: -1,
+  [NodeType.CALL]: -1,
 
-  'assignment': 1,
-  'binary': 2,
+  [NodeType.ASSIGNMENT]: 1,
+  [NodeType.BINARY]: 2,
 
-  'prefix': 999,
+  [NodeType.PREFIX]: 999,
 };

@@ -1,7 +1,7 @@
-import { Node } from '../node';
+import { Node, NodeType } from '../node';
 
 export class Function extends Node {
-  public name: string = 'function';
+  public type = NodeType.FUNCTION;
   public body: Node;
   public parameters: Node[] = [];
 }

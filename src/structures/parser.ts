@@ -3,7 +3,7 @@ import { LUA_KEYWORDS } from '../constants/lua';
 import { PRECEDENCE } from '../constants/precedence';
 import { CompileError } from './error';
 import { Source } from './source';
-import { Stack, StackType, Node } from './node';
+import { Stack, StackType, Node, NodeType } from './node';
 import { Assignment } from './nodes/assignment';
 import { Binary } from './nodes/binary';
 import { Bool } from './nodes/bool';
@@ -54,8 +54,8 @@ export class Parser {
     return type === token.type && value === token.value;
   }
 
-  private getPrecedence(node: Node | string): number {
-    return PRECEDENCE[typeof node === 'string' ? node : node.name] ?? -1;
+  private getPrecedence(node: Node | NodeType): number {
+    return PRECEDENCE[node instanceof Node ? node.type : node] ?? -1;
   }
 
   private createSource(start: Token | Node, end: Node | Token): Source {
@@ -247,7 +247,7 @@ export class Parser {
   private parseMinus(token: Token, precedence: number, stack: Stack): Node {
     // TODO: if no peek, error
     const minus = new Minus(stack);
-    const node = this.walk(this.getPrecedence('prefix'), [ ...stack, minus.getStack(StackType.INSIDE) ]);
+    const node = this.walk(this.getPrecedence(NodeType.PREFIX), [ ...stack, minus.getStack(StackType.INSIDE) ]);
 
     minus.node = node;
     minus.source = this.createSource(token, node);
@@ -316,7 +316,7 @@ export class Parser {
       return node;
     }
 
-    if (this.getPrecedence('binary') < precedence) {
+    if (this.getPrecedence(NodeType.BINARY) < precedence) {
       return node;
     }
 
@@ -340,7 +340,7 @@ export class Parser {
       return node;
     }
 
-    if (this.getPrecedence('comparison') < precedence) {
+    if (this.getPrecedence(NodeType.COMPARISON) < precedence) {
       return node;
     }
 
@@ -364,7 +364,7 @@ export class Parser {
       return node;
     }
 
-    if (this.getPrecedence('assignment') < precedence) {
+    if (this.getPrecedence(NodeType.ASSIGNMENT) < precedence) {
       return node;
     }
 
@@ -392,7 +392,7 @@ export class Parser {
       return node;
     }
 
-    if (this.getPrecedence('call') < precedence) {
+    if (this.getPrecedence(NodeType.CALL) < precedence) {
       return node;
     }
 
@@ -451,7 +451,7 @@ export class Parser {
     const stack: Stack = [ ];
 
     while (this.index < this.tokens.length) {
-      this.program.nodes.push(this.walk(this.getPrecedence('program'), stack));
+      this.program.nodes.push(this.walk(this.getPrecedence(NodeType.PROGRAM), stack));
     }
 
     return this.program;

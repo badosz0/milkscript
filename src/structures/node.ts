@@ -7,14 +7,14 @@ export enum StackType {
 }
 
 type StackElement = {
-  name: string;
+  node: Node;
   type: StackType;
 };
 
 export type Stack = StackElement[];
 
 export abstract class Node {
-  public abstract name: string;
+  public abstract type: NodeType;
   public source: Source;
   public stack: Stack;
 
@@ -24,12 +24,30 @@ export abstract class Node {
 
   public getStack(type = StackType.REGULAR): StackElement {
     return {
-      name: this.name,
+      node: this,
       type,
     };
   }
 
   public get precedence(): number {
-    return PRECEDENCE[this.name] ?? -1;
+    return PRECEDENCE[this.type] ?? -1;
   }
+}
+
+export const enum NodeType {
+  ASSIGNMENT = 'assignment',
+  BINARY = 'binary operation',
+  BOOL = 'boolean',
+  CALL = 'function call',
+  COMPARISON = 'comparison',
+  FUNCTION = 'function declaration',
+  IDENTIFIER = 'identifier',
+  INTEGER = 'integer',
+  LUA = 'lua code',
+  MINUS = 'negitive statement',
+  PARENTHESIZED = 'parenthesized statement',
+  PROGRAM = 'program',
+  RETURN = 'return statement',
+
+  PREFIX = 'prefix'
 }

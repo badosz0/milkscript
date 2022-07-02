@@ -1,7 +1,7 @@
-import { Node } from '../node';
+import { Node, NodeType } from '../node';
 
 export class Call extends Node {
-  public name: string = 'call';
+  public type = NodeType.CALL;
   public arguments: Node[] = [];
   public caller: Node;
 }

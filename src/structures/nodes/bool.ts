@@ -1,6 +1,6 @@
-import { Node } from '../node';
+import { Node, NodeType } from '../node';
 
 export class Bool extends Node {
-  public name: string = 'boolean';
+  public type = NodeType.BOOL;
   public value: boolean;
 }

@@ -1,6 +1,6 @@
-import { Node } from '../node';
+import { Node, NodeType } from '../node';
 
 export class Return extends Node {
-  public name: string = 'return';
+  public type = NodeType.RETURN;
   public node?: Node;
 }

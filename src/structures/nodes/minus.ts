@@ -1,6 +1,6 @@
-import { Node } from '../node';
+import { Node, NodeType } from '../node';
 
 export class Minus extends Node {
-  public name: string = 'minus';
+  public type = NodeType.MINUS;
   public node: Node;
 }

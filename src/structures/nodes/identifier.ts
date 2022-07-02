@@ -1,6 +1,6 @@
-import { Node } from '../node';
+import { Node, NodeType } from '../node';
 
 export class Identifier extends Node {
-  public name: string = 'identifier';
+  public type = NodeType.IDENTIFIER;
   public variable: string;
 }

@@ -10,7 +10,7 @@ export class Analyzer {
   }
 
   private walk(node: Node): void {
-    assert(false, node.name);
+    assert(false, node.type);
   }
 
   public analyze(): void {

@@ -1,6 +1,6 @@
-import { Node } from '../node';
+import { Node, NodeType } from '../node';
 
 export class Lua extends Node {
-  public name: string = 'lua code';
+  public type = NodeType.LUA;
   public code: string;
 }

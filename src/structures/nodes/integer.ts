@@ -1,6 +1,6 @@
-import { Node } from '../node';
+import { Node, NodeType } from '../node';
 
 export class Integer extends Node {
-  public name: string = 'integer';
+  public type = NodeType.INTEGER;
   public value: number;
 }

@@ -1,6 +1,6 @@
-import { Node } from '../node';
+import { Node, NodeType } from '../node';
 
 export class Program extends Node {
-  public name: string = 'program';
+  public type = NodeType.PROGRAM;
   public nodes: Node[] = [];
 }
