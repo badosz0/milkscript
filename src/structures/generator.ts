@@ -112,7 +112,11 @@ export class Generator {
     const left = this.walk(node.left);
     const right = this.walk(node.right);
 
-    // TODO: local, sequence
+    // TODO: sequence
+    if (node.left instanceof Identifier && node.local.length > 0) {
+      return `local ${node.local.join(', ')}\n${this.generateIndentation()}${left} = ${right}`;
+    }
+
     return `${left} = ${right}`;
   }
 
