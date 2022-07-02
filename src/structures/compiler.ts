@@ -1,3 +1,4 @@
+import { Analyzer } from './analyzer';
 import { CompileError } from './error';
 import { File } from './file';
 import { Generator } from './generator';
@@ -14,6 +15,9 @@ export class Compiler {
 
       const parser = new Parser(tokens);
       const program = parser.parse();
+
+      const analyzer = new Analyzer(program);
+      analyzer.analyze();
 
       const generator = new Generator(program);
       const code = generator.generate();

@@ -290,11 +290,11 @@ export class Parser {
 
   private parseIdentifier(token: Token, precedence: number, stack: Stack): Node {
     const identifier = new Identifier(stack);
-    identifier.variable = token.value;
+    identifier.name = token.value;
     identifier.source = token.source;
 
-    if (LUA_KEYWORDS.includes(identifier.variable)) {
-      identifier.variable = `__${identifier.variable}`;
+    if (LUA_KEYWORDS.includes(identifier.name)) {
+      identifier.name = `__${identifier.name}`;
     }
 
     return this.checkExpression(identifier, precedence, [ ...stack, identifier.getStack() ]);

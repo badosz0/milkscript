@@ -51,7 +51,7 @@ export class Generator {
   }
 
   private generateIdentifier(node: Identifier): string {
-    return node.variable;
+    return node.name;
   }
 
   private generateFunction(node: Function): string {
@@ -60,7 +60,7 @@ export class Generator {
     for (const parameter of node.parameters) {
       // TODO: assignment, rest, optional. se;f
       if (parameter instanceof Identifier) {
-        parameters.push(parameter.variable);
+        parameters.push(parameter.name);
       } else {
         assert(false);
       }

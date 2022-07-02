@@ -6,4 +6,5 @@ export class Assignment extends Node {
   public left: Node;
   public right: Node;
   public symbol: Token;
+  public local: string[] = [];
 }
