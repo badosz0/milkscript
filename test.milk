@@ -1,6 +1,15 @@
 __lua_print = (text) -> #lua "print(text)"
 
-print = (args) -> __lua_print(args)
+print = (args) {
+  __lua_print(args)
+}
+
+{
+  b = 2 + 2
+  // b = 1
+}
+
+b = 1
 
 a = 4 + 4
 

@@ -1,7 +1,8 @@
 import { assert } from 'node:console';
-import { Node } from './node';
+import { Node, StackType } from './node';
 import { Assignment } from './nodes/assignment';
 import { Binary } from './nodes/binary';
+import { Block } from './nodes/block';
 import { Bool } from './nodes/bool';
 import { Call } from './nodes/call';
 import { Comparison } from './nodes/comparison';
@@ -120,6 +121,33 @@ export class Generator {
     return `${left} = ${right}`;
   }
 
+  private generateBlock(node: Block): string {
+    const standalone = node.stack.at(-1)?.type !== StackType.INSIDE;
+
+    let body = '';
+
+    if (standalone) {
+      this.indentation++;
+    }
+
+    node.body.forEach((inBody, i) => {
+      // TODO: defer
+      // TODO: ;
+      const newLine = i < (node.body.length - 1) ? '\n' : '';
+      const indentation = standalone
+        ? this.generateIndentation()
+        : (i > 0 ? this.generateIndentation() : '');
+
+      body += `${indentation}${this.walk(inBody)}${newLine}`;
+    });
+
+    if (standalone) {
+      this.indentation--;
+    }
+
+    return !standalone ? `${body}` : `do\n${body}\n${this.generateIndentation()}end`;
+  }
+
   private walk(node: Node): string {
     if (node instanceof Integer) {
       return this.generateInteger(node);
@@ -156,6 +184,9 @@ export class Generator {
     }
     if (node instanceof Assignment) {
       return this.generateAssignment(node);
+    }
+    if (node instanceof Block) {
+      return this.generateBlock(node);
     }
 
     assert(false);

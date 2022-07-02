@@ -37,6 +37,7 @@ export abstract class Node {
 export const enum NodeType {
   ASSIGNMENT = 'assignment',
   BINARY = 'binary operation',
+  BLOCK = 'block statement',
   BOOL = 'boolean',
   CALL = 'function call',
   COMPARISON = 'comparison',

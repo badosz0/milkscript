@@ -18,6 +18,7 @@ import { Parenthesized } from './nodes/parenthesized';
 import { Program } from './nodes/program';
 import { Return } from './nodes/return';
 import { Token, TokenType } from './token';
+import { Block } from './nodes/block';
 
 export class Parser {
   private tokens: Token[];
@@ -90,11 +91,39 @@ export class Parser {
         return this.parseMinus(token, precedence, stack);
       case '(':
         return this.parseParenthesizedOrFunction(token, precedence, stack);
+      case '{':
+        return this.parseBlock(token, precedence, stack);
       case '#':
         return this.parseDirective(token, precedence, stack);
       default:
         assert(false);// TODO: default error
     }
+  }
+
+  private parseBlock(token: Token, precedence: number, stack: Stack): Node {
+    if (!this.peek()) {
+      throw new CompileError(17, token.source);
+    }
+
+    const block = new Block(stack);
+    const nodes: Node[] = [];
+
+    while (true) {
+      if (!this.peek()) {
+        throw new CompileError(17, token.source);
+      }
+
+      if (this.checkToken(TokenType.SYMBOL, '}')) {
+        break;
+      }
+
+      nodes.push(this.walk(block.precedence, [ ...stack, block.getStack(StackType.INSIDE) ]));
+    }
+
+    block.body = nodes;
+    block.source = this.createSource(token, this.advance());
+
+    return block;
   }
 
   private parseDirective(token: Token, precedence: number, stack: Stack): Node {

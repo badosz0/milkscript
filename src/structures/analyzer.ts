@@ -1,6 +1,7 @@
 import { Node, NodeType } from './node';
 import { Assignment } from './nodes/assignment';
 import { Binary } from './nodes/binary';
+import { Block } from './nodes/block';
 import { Function } from './nodes/function';
 import { Identifier } from './nodes/identifier';
 import { Program } from './nodes/program';
@@ -49,12 +50,28 @@ export class Analyzer {
     this.walk(node.right);
   }
 
+  private analyzeBlock(node: Block): void {
+    const scope = this.scope.clone();
+    this.scope = new Scope(NodeType.BLOCK);
+
+    // TODO: warn unreachable
+
+    for (const inNode of node.body) {
+      this.walk(inNode);
+    }
+
+    this.scope = scope;
+  }
+
   private walk(node: Node): void {
     if (node instanceof Assignment) {
       return this.analyzeAssignment(node);
     }
     if (node instanceof Binary) {
       return this.analyzeBinary(node);
+    }
+    if (node instanceof Block) {
+      return this.analyzeBlock(node);
     }
 
     console.log('a: ' + node.type);

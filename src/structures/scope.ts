@@ -43,4 +43,14 @@ export class Scope {
   public addFunction(name: string, parameters: Node[], source: Source): void {
     this.functions.push({ name, parameters, source, level: this.level });
   }
+
+  public clone(): Scope {
+    const clonedScope = new Scope(this.nodeType);
+
+    clonedScope.variables = [ ...this.variables ];
+    clonedScope.functions = [ ...this.functions ];
+    clonedScope.level = this.level;
+
+    return clonedScope;
+  }
 }
