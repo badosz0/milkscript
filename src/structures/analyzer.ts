@@ -21,16 +21,17 @@ export class Analyzer {
     if (node.left instanceof Identifier) {
       // TODO: check if name reserved
       const variable = this.scope.getVariable(node.left.name);
-      // TODO: fetch function too
+      const function_ = this.scope.getFunction(node.left.name);
 
-      if (!variable) {
+      if (!variable && !function_) {
         node.local = [ node.left.name ];
       }
 
       // TODO: if const error
 
       if (node.right instanceof Function) {
-        // TODO
+        this.walk(node.right);
+        this.scope.addFunction(node.left.name, node.right.parameters, node.right.source);
       } else {
         this.walk(node.right);
         this.scope.addVariable(node.left.name, node.left.source);
