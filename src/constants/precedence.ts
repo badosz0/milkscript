@@ -1,6 +1,6 @@
-import { Statement } from '../structures/statement';
+import { Node } from '../structures/node';
 
-export const PRECEDENCE: Record<Statement['name'], number> = {
+export const PRECEDENCE: Record<Node['name'], number> = {
   'parenthesized': -1,
   'function': -1,
   'return': -1,

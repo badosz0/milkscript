@@ -3,3 +3,5 @@ __lua_print = (text) -> #lua "print(text)"
 print = (args) -> __lua_print(args)
 
 a = 4 + 4
+
+print(a)

@@ -3,20 +3,20 @@ import { LUA_KEYWORDS } from '../constants/lua';
 import { PRECEDENCE } from '../constants/precedence';
 import { CompileError } from './error';
 import { Source } from './source';
-import { Stack, StackType, Statement } from './statement';
-import { Assignment } from './statements/assignment';
-import { Binary } from './statements/binary';
-import { Bool } from './statements/bool';
-import { Call } from './statements/call';
-import { Comparison } from './statements/comparison';
-import { Function } from './statements/function';
-import { Identifier } from './statements/identifier';
-import { Integer } from './statements/integer';
-import { Lua } from './statements/lua';
-import { Minus } from './statements/minus';
-import { Parenthesized } from './statements/parenthesized';
-import { Program } from './statements/program';
-import { Return } from './statements/return';
+import { Stack, StackType, Node } from './node';
+import { Assignment } from './nodes/assignment';
+import { Binary } from './nodes/binary';
+import { Bool } from './nodes/bool';
+import { Call } from './nodes/call';
+import { Comparison } from './nodes/comparison';
+import { Function } from './nodes/function';
+import { Identifier } from './nodes/identifier';
+import { Integer } from './nodes/integer';
+import { Lua } from './nodes/lua';
+import { Minus } from './nodes/minus';
+import { Parenthesized } from './nodes/parenthesized';
+import { Program } from './nodes/program';
+import { Return } from './nodes/return';
 import { Token, TokenType } from './token';
 
 export class Parser {
@@ -54,11 +54,11 @@ export class Parser {
     return type === token.type && value === token.value;
   }
 
-  private getPrecedence(statement: Statement | string): number {
-    return PRECEDENCE[typeof statement === 'string' ? statement : statement.name] ?? -1;
+  private getPrecedence(node: Node | string): number {
+    return PRECEDENCE[typeof node === 'string' ? node : node.name] ?? -1;
   }
 
-  private createSource(start: Token | Statement, end: Statement | Token): Source {
+  private createSource(start: Token | Node, end: Node | Token): Source {
     return {
       file: start.source.file,
       line: {
@@ -76,7 +76,7 @@ export class Parser {
     };
   }
 
-  private parseNumber(token: Token, precedence: number, stack: Stack): Statement {
+  private parseNumber(token: Token, precedence: number, stack: Stack): Node {
     const integer = new Integer(stack);
     integer.value = Number(token.value);
     integer.source = token.source;
@@ -84,7 +84,7 @@ export class Parser {
     return this.checkExpression(integer, precedence, [ ...stack, integer.getStack() ]);
   }
 
-  private parseSymbol(token: Token, precedence: number, stack: Stack): Statement {
+  private parseSymbol(token: Token, precedence: number, stack: Stack): Node {
     switch (token.value) {
       case '-':
         return this.parseMinus(token, precedence, stack);
@@ -97,7 +97,7 @@ export class Parser {
     }
   }
 
-  private parseDirective(token: Token, precedence: number, stack: Stack): Statement {
+  private parseDirective(token: Token, precedence: number, stack: Stack): Node {
     const directive = this.peek();
 
     if (!directive) {
@@ -116,7 +116,7 @@ export class Parser {
     }
   }
 
-  private parseLua(token: Token, precedence: number, stack: Stack): Statement {
+  private parseLua(token: Token, precedence: number, stack: Stack): Node {
     const keyword = this.advance();
 
     if (!this.checkTokenType(TokenType.STRING)) {
@@ -132,7 +132,7 @@ export class Parser {
     return lua;
   }
 
-  private parseParenthesizedOrFunction(token: Token, precedence: number, stack: Stack): Statement {
+  private parseParenthesizedOrFunction(token: Token, precedence: number, stack: Stack): Node {
     // TODO: if if, for, elseif, case, switch, while, return
 
     let leftParen = 0;
@@ -165,7 +165,7 @@ export class Parser {
     return this.parseParenthesized(token, precedence, stack);
   }
 
-  private parseParenthesized(token: Token, precedence: number, stack: Stack): Statement {
+  private parseParenthesized(token: Token, precedence: number, stack: Stack): Node {
     if (!this.peek()) {
       throw new CompileError(6, token.source);
     }
@@ -175,12 +175,12 @@ export class Parser {
     }
 
     const parenthesized = new Parenthesized(stack);
-    const statement = this.walk(parenthesized.precedence, [ ...stack, parenthesized.getStack(StackType.INSIDE) ]);
+    const node = this.walk(parenthesized.precedence, [ ...stack, parenthesized.getStack(StackType.INSIDE) ]);
 
-    parenthesized.statement = statement;
+    parenthesized.node = node;
 
     if (!this.checkToken(TokenType.SYMBOL, ')')) {
-      throw new CompileError(6, this.createSource(token, statement));
+      throw new CompileError(6, this.createSource(token, node));
     }
 
     parenthesized.source = this.createSource(token, this.advance());
@@ -188,7 +188,7 @@ export class Parser {
     return this.checkExpression(parenthesized, precedence, [ ...stack, parenthesized.getStack() ]);
   }
 
-  private parseFunction(token: Token, stack: Stack): Statement {
+  private parseFunction(token: Token, stack: Stack): Node {
     const function_ = new Function(stack);
 
     while (true) {
@@ -244,18 +244,18 @@ export class Parser {
     return function_;
   }
 
-  private parseMinus(token: Token, precedence: number, stack: Stack): Statement {
+  private parseMinus(token: Token, precedence: number, stack: Stack): Node {
     // TODO: if no peek, error
     const minus = new Minus(stack);
-    const statement = this.walk(this.getPrecedence('prefix'), [ ...stack, minus.getStack(StackType.INSIDE) ]);
+    const node = this.walk(this.getPrecedence('prefix'), [ ...stack, minus.getStack(StackType.INSIDE) ]);
 
-    minus.statement = statement;
-    minus.source = this.createSource(token, statement);
+    minus.node = node;
+    minus.source = this.createSource(token, node);
 
     return this.checkExpression(minus, precedence, [ ...stack, minus.getStack() ]);
   }
 
-  private parseKeyword(token: Token, precedence: number, stack: Stack): Statement {
+  private parseKeyword(token: Token, precedence: number, stack: Stack): Node {
     switch (token.value) {
       case 'true':
       case 'false':
@@ -267,7 +267,7 @@ export class Parser {
     }
   }
 
-  private parseBool(token: Token, precedence: number, stack: Stack): Statement {
+  private parseBool(token: Token, precedence: number, stack: Stack): Node {
     const bool = new Bool(stack);
     bool.value = token.value === 'true';
     bool.source = token.source;
@@ -275,12 +275,12 @@ export class Parser {
     return this.checkExpression(bool, precedence, [ ...stack, bool.getStack() ]);
   }
 
-  private parseReturn(token: Token, stack: Stack): Statement {
+  private parseReturn(token: Token, stack: Stack): Node {
     const return_ = new Return(stack);
 
     if (this.peek()?.source.line.start === token.source.line.end) {
-      return_.statement = this.walk(return_.precedence, [ ...stack, return_.getStack(StackType.INSIDE) ]);
-      return_.source = this.createSource(token, return_.statement);
+      return_.node = this.walk(return_.precedence, [ ...stack, return_.getStack(StackType.INSIDE) ]);
+      return_.source = this.createSource(token, return_.node);
     } else {
       return_.source = token.source;
     }
@@ -288,7 +288,7 @@ export class Parser {
     return return_;
   }
 
-  private parseIdentifier(token: Token, precedence: number, stack: Stack): Statement {
+  private parseIdentifier(token: Token, precedence: number, stack: Stack): Node {
     const identifier = new Identifier(stack);
     identifier.variable = token.value;
     identifier.source = token.source;
@@ -300,110 +300,110 @@ export class Parser {
     return this.checkExpression(identifier, precedence, [ ...stack, identifier.getStack() ]);
   }
 
-  private checkExpression(statement: Statement, precedence: number, stack: Stack): Statement {
+  private checkExpression(node: Node, precedence: number, stack: Stack): Node {
     if (this.peek()) {
-      statement = this.checkBinary(statement, precedence, stack);
-      statement = this.checkComparison(statement, precedence, stack);
-      statement = this.checkCall(statement, precedence, stack);
-      statement = this.checkAssignment(statement, precedence, stack);
+      node = this.checkBinary(node, precedence, stack);
+      node = this.checkComparison(node, precedence, stack);
+      node = this.checkCall(node, precedence, stack);
+      node = this.checkAssignment(node, precedence, stack);
     }
 
-    return statement;
+    return node;
   }
 
-  private checkBinary(statement: Statement, precedence: number, stack: Stack): Statement {
+  private checkBinary(node: Node, precedence: number, stack: Stack): Node {
     if (!this.checkTokenType(TokenType.SYMBOL) || ![ '+', '-', '*', '/', '%', '**' ].includes(this.peek().value)) {
-      return statement;
+      return node;
     }
 
     if (this.getPrecedence('binary') < precedence) {
-      return statement;
+      return node;
     }
 
     const operator = this.advance();
 
     if (!this.peek()) {
-      throw new CompileError(5, this.createSource(statement, operator));
+      throw new CompileError(5, this.createSource(node, operator));
     }
 
     const binary = new Binary(stack);
     binary.operator = operator;
-    binary.left = statement;
+    binary.left = node;
     binary.right = this.walk(binary.precedence, [ ...stack, binary.getStack(StackType.INSIDE) ]);
     binary.source = this.createSource(binary.left, binary.right);
 
     return this.checkExpression(binary, precedence, [ ...stack, binary.getStack() ]);
   }
 
-  private checkComparison(statement: Statement, precedence: number, stack: Stack): Statement {
+  private checkComparison(node: Node, precedence: number, stack: Stack): Node {
     if (!this.checkTokenType(TokenType.SYMBOL) || ![ '<', '>', '<=', '>=', '==', '!=' ].includes(this.peek().value)) {
-      return statement;
+      return node;
     }
 
     if (this.getPrecedence('comparison') < precedence) {
-      return statement;
+      return node;
     }
 
     const symbol = this.advance();
 
     if (!this.peek()) {
-      throw new CompileError(4, this.createSource(statement, symbol));
+      throw new CompileError(4, this.createSource(node, symbol));
     }
 
     const comparison = new Comparison(stack);
     comparison.symbol = symbol;
-    comparison.left = statement;
+    comparison.left = node;
     comparison.right = this.walk(comparison.precedence, [ ...stack, comparison.getStack(StackType.INSIDE) ]);
     comparison.source = this.createSource(comparison.left, comparison.right);
 
     return this.checkExpression(comparison, precedence, [ ...stack, comparison.getStack() ]);
   }
 
-  private checkAssignment(statement: Statement, precedence: number, stack: Stack): Statement {
+  private checkAssignment(node: Node, precedence: number, stack: Stack): Node {
     if (!this.checkToken(TokenType.SYMBOL, '=')) {
-      return statement;
+      return node;
     }
 
     if (this.getPrecedence('assignment') < precedence) {
-      return statement;
+      return node;
     }
 
     const symbol = this.advance();
 
     if (!this.peek()) {
-      throw new CompileError(16, this.createSource(statement, symbol));
+      throw new CompileError(16, this.createSource(node, symbol));
     }
 
     const assignment = new Assignment(stack);
 
-    assignment.left = statement;
+    assignment.left = node;
     assignment.right = this.walk(assignment.precedence, [ ...stack, assignment.getStack(StackType.INSIDE) ]);
     assignment.source = this.createSource(assignment.left, assignment.right);
 
     return this.checkExpression(assignment, precedence, [ ...stack, assignment.getStack() ]);
   }
 
-  private checkCall(statement: Statement, precedence: number, stack: Stack): Statement {
+  private checkCall(node: Node, precedence: number, stack: Stack): Node {
     if (!this.checkToken(TokenType.SYMBOL, '(')) {
-      return statement;
+      return node;
     }
 
-    if (this.peek().source.index.start !== statement.source.index.end) {
-      return statement;
+    if (this.peek().source.index.start !== node.source.index.end) {
+      return node;
     }
 
     if (this.getPrecedence('call') < precedence) {
-      return statement;
+      return node;
     }
 
     const call = new Call(stack);
-    call.caller = statement;
+    call.caller = node;
 
     const leftParen = this.advance();
 
     while (true) {
       if (!this.peek()) {
-	      throw new CompileError(10, this.createSource(statement, leftParen));
+	      throw new CompileError(10, this.createSource(node, leftParen));
       }
 
       if (this.checkToken(TokenType.SYMBOL, ')')) {
@@ -413,7 +413,7 @@ export class Parser {
       const argument = this.walk(call.precedence, [ ...stack, call.getStack(StackType.INSIDE) ]);
 
       if (!this.peek()) {
-	      throw new CompileError(10, this.createSource(statement, leftParen));
+	      throw new CompileError(10, this.createSource(node, leftParen));
       }
 
       if (this.checkToken(TokenType.SYMBOL, ')')) {
@@ -422,19 +422,19 @@ export class Parser {
       }
 
       if (!this.checkToken(TokenType.SYMBOL, ',')) {
-        throw new CompileError(11, this.createSource(statement, leftParen));
+        throw new CompileError(11, this.createSource(node, leftParen));
       } else {
         call.arguments.push(argument);
         this.advance();
       }
     }
 
-    call.source = this.createSource(statement, this.advance());
+    call.source = this.createSource(node, this.advance());
 
     return this.checkExpression(call, precedence, [ ...stack, call.getStack() ]);
   }
 
-  private walk(precendence: number, stack: Stack): Statement {
+  private walk(precendence: number, stack: Stack): Node {
     const token = this.advance();
 
     switch (token.type) {
@@ -451,7 +451,7 @@ export class Parser {
     const stack: Stack = [ ];
 
     while (this.index < this.tokens.length) {
-      this.program.statements.push(this.walk(this.getPrecedence('program'), stack));
+      this.program.nodes.push(this.walk(this.getPrecedence('program'), stack));
     }
 
     return this.program;

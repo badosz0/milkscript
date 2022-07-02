@@ -1,18 +1,18 @@
 import { assert } from 'node:console';
-import { Statement } from './statement';
-import { Assignment } from './statements/assignment';
-import { Binary } from './statements/binary';
-import { Bool } from './statements/bool';
-import { Call } from './statements/call';
-import { Comparison } from './statements/comparison';
-import { Function } from './statements/function';
-import { Identifier } from './statements/identifier';
-import { Integer } from './statements/integer';
-import { Lua } from './statements/lua';
-import { Minus } from './statements/minus';
-import { Parenthesized } from './statements/parenthesized';
-import { Program } from './statements/program';
-import { Return } from './statements/return';
+import { Node } from './node';
+import { Assignment } from './nodes/assignment';
+import { Binary } from './nodes/binary';
+import { Bool } from './nodes/bool';
+import { Call } from './nodes/call';
+import { Comparison } from './nodes/comparison';
+import { Function } from './nodes/function';
+import { Identifier } from './nodes/identifier';
+import { Integer } from './nodes/integer';
+import { Lua } from './nodes/lua';
+import { Minus } from './nodes/minus';
+import { Parenthesized } from './nodes/parenthesized';
+import { Program } from './nodes/program';
+import { Return } from './nodes/return';
 
 export class Generator {
   private program: Program;
@@ -27,37 +27,37 @@ export class Generator {
     return '  '.repeat(this.indentation + additional);
   }
 
-  private generateInteger(statement: Integer): string {
-    return statement.value.toString();
+  private generateInteger(node: Integer): string {
+    return node.value.toString();
   }
 
-  private generateMinus(statement: Minus): string {
+  private generateMinus(node: Minus): string {
     // TODO if for example negative is a number then dont generate ()
-    return `-(${this.walk(statement.statement)})`;
+    return `-(${this.walk(node.node)})`;
   }
 
-  private generateBool(statement: Bool): string {
-    return statement.value ? 'true' : 'false';
+  private generateBool(node: Bool): string {
+    return node.value ? 'true' : 'false';
   }
 
-  private generateBinary(statement: Binary): string {
-    return statement.operator.value === '**'
-      ? `__pow(${this.walk(statement.left)}, ${this.walk(statement.right)})` // TODO __pov
-      : `${this.walk(statement.left)} ${statement.operator.value} ${this.walk(statement.right)}`;
+  private generateBinary(node: Binary): string {
+    return node.operator.value === '**'
+      ? `__pow(${this.walk(node.left)}, ${this.walk(node.right)})` // TODO __pov
+      : `${this.walk(node.left)} ${node.operator.value} ${this.walk(node.right)}`;
   }
 
-  private generateComparison(statement: Comparison): string {
-    return `${this.walk(statement.left)} ${statement.symbol.value.replace('!=', '~=')} ${this.walk(statement.right)}`;
+  private generateComparison(node: Comparison): string {
+    return `${this.walk(node.left)} ${node.symbol.value.replace('!=', '~=')} ${this.walk(node.right)}`;
   }
 
-  private generateIdentifier(statement: Identifier): string {
-    return statement.variable;
+  private generateIdentifier(node: Identifier): string {
+    return node.variable;
   }
 
-  private generateFunction(statement: Function): string {
+  private generateFunction(node: Function): string {
     const parameters: string[] = [];
 
-    for (const parameter of statement.parameters) {
+    for (const parameter of node.parameters) {
       // TODO: assignment, rest, optional. se;f
       if (parameter instanceof Identifier) {
         parameters.push(parameter.variable);
@@ -68,7 +68,7 @@ export class Generator {
 
     this.indentation++;
 
-    const statements = `${this.generateIndentation()}${this.walk(statement.body)}\n`;
+    const statements = `${this.generateIndentation()}${this.walk(node.body)}\n`;
 
     // TODO: default block
     // TODO: selfParameters
@@ -80,22 +80,22 @@ export class Generator {
     return `function (${parameters.join(', ')})\n${statements}${this.generateIndentation()}end`;
   }
 
-  private generateParenthesized(statement: Parenthesized): string {
-    return `(${this.walk(statement.statement)})`;
+  private generateParenthesized(node: Parenthesized): string {
+    return `(${this.walk(node.node)})`;
   }
 
-  private generateReturn(statement: Return): string {
-    return `return${statement.statement ? ` ${this.walk(statement.statement)}` : ''}`;
+  private generateReturn(node: Return): string {
+    return `return${node.node ? ` ${this.walk(node.node)}` : ''}`;
   }
 
-  private generateCall(statement: Call): string {
+  private generateCall(node: Call): string {
     // TODO: self
 
-    const caller = this.walk(statement.caller);
+    const caller = this.walk(node.caller);
 
     const callArguments: string[] = [];
 
-    for (const argument of statement.arguments) {
+    for (const argument of node.arguments) {
       callArguments.push(this.walk(argument));
     }
 
@@ -104,62 +104,62 @@ export class Generator {
     return `${caller}(${callArguments.join(', ')})`;
   }
 
-  private generateLua(statement: Lua): string {
-    return statement.code.replace(/\\n/g, '\n');
+  private generateLua(node: Lua): string {
+    return node.code.replace(/\\n/g, '\n');
   }
 
-  private generateAssignment(statement: Assignment): string {
-    const left = this.walk(statement.left);
-    const right = this.walk(statement.right);
+  private generateAssignment(node: Assignment): string {
+    const left = this.walk(node.left);
+    const right = this.walk(node.right);
 
     // TODO: local, sequence
     return `${left} = ${right}`;
   }
 
-  private walk(statement: Statement): string {
-    if (statement instanceof Integer) {
-      return this.generateInteger(statement);
+  private walk(node: Node): string {
+    if (node instanceof Integer) {
+      return this.generateInteger(node);
     }
-    if (statement instanceof Minus) {
-      return this.generateMinus(statement);
+    if (node instanceof Minus) {
+      return this.generateMinus(node);
     }
-    if (statement instanceof Binary) {
-      return this.generateBinary(statement);
+    if (node instanceof Binary) {
+      return this.generateBinary(node);
     }
-    if (statement instanceof Bool) {
-      return this.generateBool(statement);
+    if (node instanceof Bool) {
+      return this.generateBool(node);
     }
-    if (statement instanceof Comparison) {
-      return this.generateComparison(statement);
+    if (node instanceof Comparison) {
+      return this.generateComparison(node);
     }
-    if (statement instanceof Identifier) {
-      return this.generateIdentifier(statement);
+    if (node instanceof Identifier) {
+      return this.generateIdentifier(node);
     }
-    if (statement instanceof Parenthesized) {
-      return this.generateParenthesized(statement);
+    if (node instanceof Parenthesized) {
+      return this.generateParenthesized(node);
     }
-    if (statement instanceof Function) {
-      return this.generateFunction(statement);
+    if (node instanceof Function) {
+      return this.generateFunction(node);
     }
-    if (statement instanceof Return) {
-      return this.generateReturn(statement);
+    if (node instanceof Return) {
+      return this.generateReturn(node);
     }
-    if (statement instanceof Call) {
-      return this.generateCall(statement);
+    if (node instanceof Call) {
+      return this.generateCall(node);
     }
-    if (statement instanceof Lua) {
-      return this.generateLua(statement);
+    if (node instanceof Lua) {
+      return this.generateLua(node);
     }
-    if (statement instanceof Assignment) {
-      return this.generateAssignment(statement);
+    if (node instanceof Assignment) {
+      return this.generateAssignment(node);
     }
 
     assert(false);
   }
 
   public generate(): string {
-    this.program.statements.forEach((statement, i) => {
-      this.code += `${this.walk(statement)}${i === this.program.statements.length - 1 ? '' : '\n'}`;
+    this.program.nodes.forEach((node, i) => {
+      this.code += `${this.walk(node)}${i === this.program.nodes.length - 1 ? '' : '\n'}`;
     });
 
     return this.code;

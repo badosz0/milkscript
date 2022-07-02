@@ -13,7 +13,7 @@ type StackElement = {
 
 export type Stack = StackElement[];
 
-export abstract class Statement {
+export abstract class Node {
   public abstract name: string;
   public source: Source;
   public stack: Stack;
