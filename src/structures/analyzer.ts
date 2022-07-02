@@ -1,3 +1,4 @@
+import { CompileError } from './error';
 import { Node, NodeType } from './node';
 import { Assignment } from './nodes/assignment';
 import { Binary } from './nodes/binary';
@@ -50,9 +51,32 @@ export class Analyzer {
     this.walk(node.right);
   }
 
+  private analyzeFunction(node: Function): void {
+    // TODO: class
+
+    this.scope.start(NodeType.FUNCTION);
+
+    for (const parameter of node.parameters) {
+      if (parameter instanceof Assignment) {
+        if (!(parameter.left instanceof Identifier)) {
+          throw new CompileError(18, parameter.left.source);
+        }
+
+        this.scope.addVariable(parameter.left.name, parameter.left.source);
+      } else if (parameter instanceof Identifier) {
+        this.scope.addVariable(parameter.name, parameter.source);
+      } else {
+        throw new CompileError(18, parameter.source);
+      }
+    }
+
+    this.walk(node.body);
+
+    this.scope.end();
+  }
+
   private analyzeBlock(node: Block): void {
-    const scope = this.scope.clone();
-    this.scope = new Scope(NodeType.BLOCK);
+    this.scope.start(NodeType.BLOCK);
 
     // TODO: warn unreachable
 
@@ -60,7 +84,7 @@ export class Analyzer {
       this.walk(inNode);
     }
 
-    this.scope = scope;
+    this.scope.end();
   }
 
   private walk(node: Node): void {
@@ -73,8 +97,11 @@ export class Analyzer {
     if (node instanceof Block) {
       return this.analyzeBlock(node);
     }
+    if (node instanceof Function) {
+      return this.analyzeFunction(node);
+    }
 
-    console.log('a: ' + node.type);
+    // console.log('a: ' + node.type);
   }
 
   public analyze(): void {

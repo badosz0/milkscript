@@ -16,4 +16,5 @@ export const ERRORS: Record<number, string> = {
   15: 'Expected lua code provided in string',
   16: 'Unclosed assignment',
   17: 'Unclosed block statement',
+  18: 'Invalid parameter.',
 };

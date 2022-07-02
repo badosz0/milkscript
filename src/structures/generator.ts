@@ -57,11 +57,19 @@ export class Generator {
 
   private generateFunction(node: Function): string {
     const parameters: string[] = [];
+    const defaultParameters: Array<{name: string; value: Node}> = [];
 
     for (const parameter of node.parameters) {
-      // TODO: assignment, rest, optional. se;f
+      // TODO:  rest, optional. self
       if (parameter instanceof Identifier) {
         parameters.push(parameter.name);
+      } else if (parameter instanceof Assignment) {
+        const { name } = parameter.left as Identifier;
+        defaultParameters.push({
+          name,
+          value: parameter.right,
+        });
+        parameters.push(name);
       } else {
         assert(false);
       }
@@ -70,15 +78,19 @@ export class Generator {
     this.indentation++;
 
     const statements = `${this.generateIndentation()}${this.walk(node.body)}\n`;
+    let defaultBlock = '';
 
-    // TODO: default block
+    for (const parameter of defaultParameters) {
+      defaultBlock += `${this.generateIndentation()}if ${parameter.name} == nil then ${parameter.name} = ${this.walk(parameter.value)} end\n`;
+    }
+
     // TODO: selfParameters
 
     this.indentation--;
 
     // TODO: in class
 
-    return `function (${parameters.join(', ')})\n${statements}${this.generateIndentation()}end`;
+    return `function (${parameters.join(', ')})\n${defaultBlock}${statements}${this.generateIndentation()}end`;
   }
 
   private generateParenthesized(node: Parenthesized): string {

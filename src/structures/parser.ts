@@ -96,7 +96,7 @@ export class Parser {
       case '#':
         return this.parseDirective(token, precedence, stack);
       default:
-        assert(false);// TODO: default error
+        assert(false, 'symbol');// TODO: default error
     }
   }
 

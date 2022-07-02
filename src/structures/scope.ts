@@ -18,12 +18,14 @@ class ScopeFunction {
 
 export class Scope {
   public nodeType: NodeType;
+  public lastNodeType: NodeType;
   public variables: ScopeVariable[] = [];
   public functions: ScopeFunction[] = [];
   public level: number = 0;
 
   constructor(nodeType: NodeType) {
     this.nodeType = nodeType;
+    this.lastNodeType = nodeType;
   }
 
   public getVariable(name: string): ScopeVariable | null {
@@ -44,13 +46,18 @@ export class Scope {
     this.functions.push({ name, parameters, source, level: this.level });
   }
 
-  public clone(): Scope {
-    const clonedScope = new Scope(this.nodeType);
+  public start(nodeType: NodeType): void {
+    this.lastNodeType = this.nodeType;
+    this.nodeType = nodeType;
+    this.level++;
+  }
 
-    clonedScope.variables = [ ...this.variables ];
-    clonedScope.functions = [ ...this.functions ];
-    clonedScope.level = this.level;
+  public end(): void {
+    this.nodeType = this.lastNodeType;
 
-    return clonedScope;
+    this.variables = this.variables.filter(v => v.level < this.level);
+    this.functions = this.functions.filter(f => f.level < this.level);
+
+    this.level--;
   }
 }
