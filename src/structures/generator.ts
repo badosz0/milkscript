@@ -1,5 +1,6 @@
 import { assert } from 'node:console';
 import { Node, StackType } from './node';
+import { Array as MSArray } from './nodes/array';
 import { Assignment } from './nodes/assignment';
 import { Binary } from './nodes/binary';
 import { Block } from './nodes/block';
@@ -160,6 +161,16 @@ export class Generator {
     return !standalone ? `${body}` : `do\n${body}\n${this.generateIndentation()}end`;
   }
 
+  private generateArray(node: MSArray): string {
+    const elements: string[] = [];
+
+    for (const element of node.elements) {
+  			elements.push(this.walk(element));
+    }
+
+    return `{${elements.join(', ')}}`;
+  }
+
   private walk(node: Node): string {
     if (node instanceof Integer) {
       return this.generateInteger(node);
@@ -199,6 +210,9 @@ export class Generator {
     }
     if (node instanceof Block) {
       return this.generateBlock(node);
+    }
+    if (node instanceof MSArray) {
+      return this.generateArray(node);
     }
 
     assert(false);

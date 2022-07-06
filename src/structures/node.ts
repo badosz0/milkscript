@@ -35,6 +35,7 @@ export abstract class Node {
 }
 
 export const enum NodeType {
+  ARRAY = 'array',
   ASSIGNMENT = 'assignment',
   BINARY = 'binary operation',
   BLOCK = 'block statement',

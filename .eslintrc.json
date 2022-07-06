@@ -201,6 +201,8 @@
         }
       }],
       "unicorn/no-await-expression-member": "off",
+      "unicorn/no-new-array": "off",
+      "unicorn/no-instanceof-array": "off",
       "padding-line-between-statements": [
         "error",
         {

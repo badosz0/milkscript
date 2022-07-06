@@ -1,5 +1,6 @@
 import { CompileError } from './error';
 import { Node, NodeType } from './node';
+import { Array } from './nodes/array';
 import { Assignment } from './nodes/assignment';
 import { Binary } from './nodes/binary';
 import { Block } from './nodes/block';
@@ -87,6 +88,14 @@ export class Analyzer {
     this.scope.end();
   }
 
+  // eslint-disable-next-line @typescript-eslint/array-type
+  private analyzeArray(node: Array): void {
+    for (const element of node.elements) {
+      // TODO: check valid?
+      this.walk(element);
+    }
+  }
+
   private walk(node: Node): void {
     if (node instanceof Assignment) {
       return this.analyzeAssignment(node);
@@ -99,6 +108,9 @@ export class Analyzer {
     }
     if (node instanceof Function) {
       return this.analyzeFunction(node);
+    }
+    if (node instanceof Array) {
+      return this.analyzeArray(node);
     }
 
     // console.log('a: ' + node.type);
