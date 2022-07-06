@@ -20,6 +20,7 @@ import { Return } from './nodes/return';
 import { Token, TokenType } from './token';
 import { Block } from './nodes/block';
 import { Array } from './nodes/array';
+import { For } from './nodes/for';
 
 export class Parser {
   private tokens: Token[];
@@ -57,7 +58,7 @@ export class Parser {
   }
 
   private getPrecedence(node: Node | NodeType): number {
-    return PRECEDENCE[node instanceof Node ? node.type : node] ?? -1;
+    return PRECEDENCE[node instanceof Node ? node.type : node] ?? 0;
   }
 
   private createSource(start: Token | Node, end: Node | Token): Source {
@@ -330,11 +331,65 @@ export class Parser {
       case 'true':
       case 'false':
         return this.parseBool(token, precedence, stack);
+      case 'for':
+        return this.parseFor(token, precedence, stack);
       case 'return':
         return this.parseReturn(token, stack);
       default:
         return this.parseIdentifier(token, precedence, stack);
     }
+  }
+
+  private parseFor(token: Token, precedence: number, stack: Stack): Node {
+    const for_ = new For(stack);
+
+    if (!this.peek()) {
+      throw new CompileError(21, token.source);
+    }
+
+    if (this.checkToken(TokenType.SYMBOL, '<')) {
+      for_.reverse = true;
+      this.advance();
+    }
+
+    let first = this.walk(for_.precedence, [ ...stack, for_.getStack(StackType.INSIDE) ]);
+
+    if (!this.peek()) {
+      throw new CompileError(21, token.source);
+    }
+
+    if (this.checkToken(TokenType.SYMBOL, ':')) {
+      if (!(first instanceof Identifier)) {
+        throw new CompileError(22, token.source);
+      }
+
+      for_.name = first.name;
+      this.advance();
+
+      first = this.walk(for_.precedence, [ ...stack, for_.getStack(StackType.INSIDE) ]);
+    }
+
+    if (this.checkToken(TokenType.SYMBOL, '..')) {
+      this.advance();
+      for_.from = first;
+
+      if (!this.peek()) {
+        throw new CompileError(21, this.createSource(token, first));
+      }
+
+      for_.to = this.walk(for_.precedence, [ ...stack, for_.getStack(StackType.INSIDE) ]);
+    } else {
+      for_.variable = first;
+    }
+
+    if (!this.peek()) {
+      throw new CompileError(21, this.createSource(token, first));
+    }
+
+    for_.body = this.walk(for_.precedence, [ ...stack, for_.getStack(StackType.INSIDE) ]);
+    for_.source = this.createSource(token, for_.body);
+
+    return for_;
   }
 
   private parseBool(token: Token, precedence: number, stack: Stack): Node {

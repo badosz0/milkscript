@@ -6,35 +6,32 @@ local print
 print = function (args)
   __lua_print(args)
 end
-do
-  local b
-  b = 2 + 2
-  b = 1
+for it = 1, 3 - 1 do
+  print(it)
 end
-local b
-b = 1
-local a
-a = 4 + 4
-print(a)
-a = function ()
-  return 0
+for x = 1, 3 - 1 do
+  print(x)
 end
-b = function ()
-  return
+for it = 1, 3 - 1 do
+  print(it)
 end
-local c
-c = function ()
-  return 1
+local array
+array = {1, 2, 3}
+for __temp_0 = 1, #array do
+  local it = (array)[__temp_0]
+  local it_index = __temp_0 - 1
+  print(it)
 end
-a = ((1 + 2) + 3)
-b = 2 / (5 + 3) / 5 * (14 / 2)
-c = 9 + (a + 5) / 2
-a = function (b, c)
-  if c == nil then c = 3 end
-  c = 4
-  print(b)
-  print(c)
+for __temp_1 = #array, 1, -1 do
+  local it = (array)[__temp_1]
+  local it_index = __temp_1 - 1
+  print(it)
 end
-a(2, 9)
-local g
-g = {1, 2, 3, {8, 9}, {14, 24, 2 + 4 + (8 / 2), {8 * -(4)}}}
+for lol = 5 - 1, 1, -1 do
+  print(lol)
+end
+for __temp_2 = 1, #{8, 9, 0} do
+  local a = ({8, 9, 0})[__temp_2]
+  local a_index = __temp_2 - 1
+  print(2 * a)
+end

@@ -7,6 +7,7 @@ import { Block } from './nodes/block';
 import { Bool } from './nodes/bool';
 import { Call } from './nodes/call';
 import { Comparison } from './nodes/comparison';
+import { For } from './nodes/for';
 import { Function } from './nodes/function';
 import { Identifier } from './nodes/identifier';
 import { Integer } from './nodes/integer';
@@ -19,6 +20,7 @@ import { Return } from './nodes/return';
 export class Generator {
   private program: Program;
   private indentation: number = 0;
+  private tempVariables: number = 0;
   public code: string = '';
 
   constructor(program: Program) {
@@ -36,6 +38,10 @@ export class Generator {
   private generateMinus(node: Minus): string {
     // TODO if for example negative is a number then dont generate ()
     return `-(${this.walk(node.node)})`;
+  }
+
+  private generateTemp(): string {
+    return `__temp_${this.tempVariables++}`;
   }
 
   private generateBool(node: Bool): string {
@@ -72,7 +78,7 @@ export class Generator {
         });
         parameters.push(name);
       } else {
-        assert(false);
+        assert(false, 'wrong func param');
       }
     }
 
@@ -171,6 +177,43 @@ export class Generator {
     return `{${elements.join(', ')}}`;
   }
 
+  private generateFor(node: For): string {
+    let header = '';
+
+    if (node.variable) {
+      const temporary = this.generateTemp();
+
+      header = node.reverse
+        ? `for ${temporary} = #${this.walk(node.variable)}, 1, -1 do\n`
+        : `for ${temporary} = 1, #${this.walk(node.variable)} do\n`;
+
+      this.indentation++;
+
+      header += `${this.generateIndentation()}local ${node.name} = (${this.walk(node.variable)})[${temporary}]\n` +
+       `${this.generateIndentation()}local ${node.name}_index = ${temporary} - 1`;
+
+      this.indentation--;
+    } else {
+      header = node.reverse
+        ? `for ${node.name} = ${this.walk(node.from)} - 1, ${this.walk(node.to)}, -1 do`
+        : `for ${node.name} = ${this.walk(node.from)}, ${this.walk(node.to)} - 1 do`;
+    }
+
+    let statementsBlock = '';
+
+    this.indentation++;
+
+    // TODO: continue
+
+    statementsBlock += `${this.generateIndentation()}${this.walk(node.body)}\n`;
+
+    // TODO: continue
+
+    this.indentation--;
+
+    return `${header}\n${statementsBlock}${this.generateIndentation()}end`;
+  }
+
   private walk(node: Node): string {
     if (node instanceof Integer) {
       return this.generateInteger(node);
@@ -214,8 +257,11 @@ export class Generator {
     if (node instanceof MSArray) {
       return this.generateArray(node);
     }
+    if (node instanceof For) {
+      return this.generateFor(node);
+    }
 
-    assert(false);
+    assert(false, `unknown node to generate: ${node.type}`);
   }
 
   public generate(): string {

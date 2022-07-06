@@ -50,6 +50,7 @@ export const enum NodeType {
   PARENTHESIZED = 'parenthesized statement',
   PROGRAM = 'program',
   RETURN = 'return statement',
+  FOR = 'for statement',
 
   PREFIX = 'prefix'
 }

@@ -19,4 +19,6 @@ export const ERRORS: Record<number, string> = {
   18: 'Invalid parameter',
   19: 'Unclosed array',
   20: 'Array elements should be separated with comma',
+  21: 'Unclosed for loop',
+  22: 'Expected iterator name',
 };

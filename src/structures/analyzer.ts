@@ -4,6 +4,7 @@ import { Array } from './nodes/array';
 import { Assignment } from './nodes/assignment';
 import { Binary } from './nodes/binary';
 import { Block } from './nodes/block';
+import { For } from './nodes/for';
 import { Function } from './nodes/function';
 import { Identifier } from './nodes/identifier';
 import { Program } from './nodes/program';
@@ -96,6 +97,37 @@ export class Analyzer {
     }
   }
 
+  private analyzeFor(node: For): void {
+    if (node.variable) {
+      // TODO: check valid?
+
+      this.walk(node.variable);
+    }
+
+    if (node.from) {
+      // TODO: check valid?
+
+      this.walk(node.from);
+    }
+
+    if (node.to) {
+      // TODO: check valid?
+
+      this.walk(node.to);
+    }
+
+    // todo: check if name reserved
+
+    this.scope.start(NodeType.FOR);
+
+    this.scope.addVariable(node.name, node.source);
+    this.scope.addVariable(`${node.name}_index`, node.source);
+
+    this.walk(node.body);
+
+    this.scope.end();
+  }
+
   private walk(node: Node): void {
     if (node instanceof Assignment) {
       return this.analyzeAssignment(node);
@@ -111,6 +143,9 @@ export class Analyzer {
     }
     if (node instanceof Array) {
       return this.analyzeArray(node);
+    }
+    if (node instanceof For) {
+      return this.analyzeFor(node);
     }
 
     // console.log('a: ' + node.type);
