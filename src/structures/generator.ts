@@ -12,10 +12,12 @@ import { Function } from './nodes/function';
 import { Identifier } from './nodes/identifier';
 import { Integer } from './nodes/integer';
 import { Lua } from './nodes/lua';
+import { Match, MatchCase, MatchDefaultCase } from './nodes/match';
 import { Minus } from './nodes/minus';
 import { Parenthesized } from './nodes/parenthesized';
 import { Program } from './nodes/program';
 import { Return } from './nodes/return';
+import { Text } from './nodes/text';
 
 export class Generator {
   private program: Program;
@@ -214,6 +216,56 @@ export class Generator {
     return `${header}\n${statementsBlock}${this.generateIndentation()}end`;
   }
 
+  private generateText(node: Text): string {
+    return `'${node.value}'`; // TODO: check single ' or ""
+  }
+
+  private generateMatch(node: Match): string {
+    this.indentation++;
+
+    const temporary = this.generateTemp();
+    let code = `(\n${this.generateIndentation()}function ()\n`;
+
+    this.indentation++;
+
+    code += `${this.generateIndentation()}local ${temporary} = ${this.walk(node.test)}\n`;
+
+    node.cases.forEach((case_, i) => {
+      const defaultCase = case_ instanceof MatchDefaultCase;
+      const header = defaultCase
+        ? 'else'
+        : `${i !== 0 ? 'else' : ''}if `;
+      let caseCode = `${this.generateIndentation()}${header}` +
+        (!defaultCase
+          ? (case_ as MatchCase).conditions
+            .map(c => `(${temporary} == ${this.walk(c)})`)
+            .join(' or ') + ' then\n'
+          : '\n');
+
+      this.indentation++;
+
+      caseCode += `${this.generateIndentation()}${this.walk(case_.body)}\n`;
+
+      this.indentation--;
+
+      if (i === node.cases.length - 1) {
+        caseCode += `${this.generateIndentation()}end\n`;
+      }
+
+      code += caseCode;
+    });
+
+    this.indentation--;
+
+    code += `${this.generateIndentation()}end\n`;
+
+    this.indentation--;
+
+    code += `${this.generateIndentation()})()`;
+
+    return code;
+  }
+
   private walk(node: Node): string {
     if (node instanceof Integer) {
       return this.generateInteger(node);
@@ -259,6 +311,12 @@ export class Generator {
     }
     if (node instanceof For) {
       return this.generateFor(node);
+    }
+    if (node instanceof Text) {
+      return this.generateText(node);
+    }
+    if (node instanceof Match) {
+      return this.generateMatch(node);
     }
 
     assert(false, `unknown node to generate: ${node.type}`);

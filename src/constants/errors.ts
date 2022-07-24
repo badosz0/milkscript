@@ -21,4 +21,6 @@ export const ERRORS: Record<number, string> = {
   20: 'Array elements should be separated with comma',
   21: 'Unclosed for loop',
   22: 'Expected iterator name',
+  23: 'Unclosed match statement',
+  24: 'Expected \'->\' or \'=>\' after match case condition',
 };

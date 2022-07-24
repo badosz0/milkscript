@@ -7,6 +7,7 @@ import { Block } from './nodes/block';
 import { For } from './nodes/for';
 import { Function } from './nodes/function';
 import { Identifier } from './nodes/identifier';
+import { Match, MatchCase } from './nodes/match';
 import { Program } from './nodes/program';
 import { Scope } from './scope';
 
@@ -128,6 +129,23 @@ export class Analyzer {
     this.scope.end();
   }
 
+  private analyzeMatch(node: Match): void {
+    this.walk(node.test);
+
+    node.cases.forEach((_case) => {
+      if (_case instanceof MatchCase) {
+        for (const condition of _case.conditions) {
+          this.walk(condition);
+        }
+      } else {
+        // TODO: throw if not last
+      }
+
+      // TODO: allow only block or return
+      this.walk(_case.body);
+    });
+  }
+
   private walk(node: Node): void {
     if (node instanceof Assignment) {
       return this.analyzeAssignment(node);
@@ -146,6 +164,9 @@ export class Analyzer {
     }
     if (node instanceof For) {
       return this.analyzeFor(node);
+    }
+    if (node instanceof Match) {
+      return this.analyzeMatch(node);
     }
 
     // console.log('a: ' + node.type);

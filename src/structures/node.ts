@@ -51,6 +51,8 @@ export const enum NodeType {
   PROGRAM = 'program',
   RETURN = 'return statement',
   FOR = 'for statement',
+  MATCH = 'match statement',
+  TEXT = 'string',
 
   PREFIX = 'prefix'
 }

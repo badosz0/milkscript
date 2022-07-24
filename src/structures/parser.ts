@@ -21,6 +21,8 @@ import { Token, TokenType } from './token';
 import { Block } from './nodes/block';
 import { Array } from './nodes/array';
 import { For } from './nodes/for';
+import { Match, MatchCase, MatchDefaultCase } from './nodes/match';
+import { Text } from './nodes/text';
 
 export class Parser {
   private tokens: Token[];
@@ -85,6 +87,14 @@ export class Parser {
     integer.source = token.source;
 
     return this.checkExpression(integer, precedence, [ ...stack, integer.getStack() ]);
+  }
+
+  private parseString(token: Token, precedence: number, stack: Stack): Node {
+    const text = new Text(stack);
+    text.value = token.value;
+    text.source = token.source;
+
+    return this.checkExpression(text, precedence, [ ...stack, text.getStack() ]);
   }
 
   private parseSymbol(token: Token, precedence: number, stack: Stack): Node {
@@ -333,6 +343,8 @@ export class Parser {
         return this.parseBool(token, precedence, stack);
       case 'for':
         return this.parseFor(token, precedence, stack);
+      case 'match':
+        return this.parseMatch(token, precedence, stack);
       case 'return':
         return this.parseReturn(token, stack);
       default:
@@ -390,6 +402,79 @@ export class Parser {
     for_.source = this.createSource(token, for_.body);
 
     return for_;
+  }
+
+  private parseMatch(token: Token, precedence: number, stack: Stack): Node {
+    const match = new Match(stack);
+
+    if (!this.peek()) {
+      throw new CompileError(23, token.source);
+    }
+
+    match.test = this.walk(match.precedence, [ ...stack, match.getStack(StackType.INSIDE) ]);
+
+    if (!this.checkToken(TokenType.SYMBOL, '{')) {
+      throw new CompileError(23, token.source);
+    }
+
+    let last: Node | Token = this.advance();
+
+    while (true) {
+      if (!this.peek()) {
+        throw new CompileError(23, this.createSource(token, last));
+      }
+
+      let case_: MatchCase | MatchDefaultCase;
+
+      if (this.checkToken(TokenType.KEYWORD, 'default')) {
+        case_ = new MatchDefaultCase();
+        this.advance();
+      } else {
+        case_ = new MatchCase();
+      }
+
+      while (true && !(case_ instanceof MatchDefaultCase)) {
+        case_.conditions.push(this.walk(match.precedence, [ ...stack, match.getStack(StackType.INSIDE) ]));
+
+        if (!this.checkToken(TokenType.SYMBOL, '|')) {
+          break;
+        }
+
+        this.advance();
+      }
+
+      if (this.checkToken(TokenType.SYMBOL, '->')) {
+        last = this.advance();
+
+        if (!this.peek()) {
+          throw new CompileError(23, this.createSource(token, last));
+        }
+
+        case_.body = this.walk(match.precedence, [ ...stack, match.getStack(StackType.INSIDE) ]);
+        last = case_.body;
+      } else if (this.checkToken(TokenType.SYMBOL, '=>')) {
+        last = this.advance();
+
+        if (!this.peek()) {
+          throw new CompileError(23, this.createSource(token, last));
+        }
+
+        case_.body = this.parseReturn(last, [ ...stack, match.getStack(StackType.INSIDE) ]);
+        last = case_.body;
+      } else {
+        throw new CompileError(24, this.createSource(token, last));
+      }
+
+      match.cases.push(case_);
+
+      if (this.checkToken(TokenType.SYMBOL, '}')) {
+        break;
+      }
+    }
+
+    match.source = this.createSource(token, this.advance());
+
+    return match;
   }
 
   private parseBool(token: Token, precedence: number, stack: Stack): Node {
@@ -569,6 +654,8 @@ export class Parser {
         return this.parseSymbol(token, precendence, stack);
       case TokenType.KEYWORD:
         return this.parseKeyword(token, precendence, stack);
+      case TokenType.STRING:
+        return this.parseString(token, precendence, stack);
     }
   }
 
