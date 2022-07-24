@@ -6,7 +6,7 @@ local print
 print = function (args)
   __lua_print(args)
 end
-; (
+(
   function ()
     local __temp_0 = 'b'
     if (__temp_0 == 'a') then

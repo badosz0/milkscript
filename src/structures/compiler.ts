@@ -1,3 +1,4 @@
+import { writeFileSync } from 'node:fs';
 import { Analyzer } from './analyzer';
 import { CompileError } from './error';
 import { File } from './file';
@@ -5,8 +6,10 @@ import { Generator } from './generator';
 import { Lexer } from './lexer';
 import { Parser } from './parser';
 
+export type CompilerFlags = Record<string, string | boolean>;
+
 export class Compiler {
-  public compile(path: string): void {
+  public compile(path: string, flags: CompilerFlags): void {
     const file = new File(path);
     const lexer = new Lexer(file);
 
@@ -22,8 +25,7 @@ export class Compiler {
       const generator = new Generator(program);
       const code = generator.generate();
 
-      // console.log(JSON.stringify(program, null, 2));
-      console.log(code);
+      writeFileSync(flags.output as string ?? 'out.lua', code);
     } catch (error) {
       if (error instanceof CompileError) {
         error.print();
