@@ -1,0 +1,11 @@
+number = 10
+
+what = match number {
+  2 | 8 => "super cool"
+  1 | 10 | 3 | 4 => "abc"
+  9 -> {
+    g = "ok"
+    return g
+  }
+  default => "?"
+}

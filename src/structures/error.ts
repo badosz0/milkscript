@@ -16,7 +16,7 @@ export class CompileError extends Error {
     this.source = source;
   }
 
-  public print(): void {
+  public format(): string {
     const contentLines = this.source.file.content.split('\n');
     const errorDisplay = `[M${this.errorID.toString().padStart(3, '0')}]`;
 
@@ -54,6 +54,6 @@ export class CompileError extends Error {
     log += `${' '.repeat(spaceBeforeLine)}└─`;
 
     log += COLORS.reset;
-    console.log(log);
+    return log;
   }
 }

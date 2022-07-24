@@ -9,7 +9,7 @@ import { Parser } from './parser';
 export type CompilerFlags = Record<string, string | boolean>;
 
 export class Compiler {
-  public compile(path: string, flags: CompilerFlags): void {
+  public compile(path: string, flags: CompilerFlags): string | void {
     const file = new File(path);
     const lexer = new Lexer(file);
 
@@ -25,10 +25,17 @@ export class Compiler {
       const generator = new Generator(program);
       const code = generator.generate();
 
-      writeFileSync(flags.output as string ?? 'out.lua', code);
+      if (!flags['no-output']) {
+        writeFileSync(flags.output as string ?? 'out.lua', code);
+      }
     } catch (error) {
       if (error instanceof CompileError) {
-        error.print();
+        if (flags['return-error']) {
+          return error.errorMessage;
+        }
+
+        console.log(error.format());
+
         return;
       }
 

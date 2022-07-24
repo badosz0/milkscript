@@ -1,0 +1,27 @@
+for 1..3 {
+  print(it)
+}
+
+for x: 1..3 {
+  print(x)
+}
+
+for 1..3 print(it)
+
+array = [1, 2, 3]
+
+for array {
+  print(it)
+}
+
+for < array {
+  print(it)
+}
+
+for < lol: 5..1 {
+  print(lol)
+}
+
+for a: [8, 9, 0] {
+  print(2 * a)
+}
